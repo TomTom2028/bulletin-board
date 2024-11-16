@@ -1,15 +1,63 @@
 import javax.crypto.spec.SecretKeySpec;
+import javax.swing.*;
+import java.awt.*;
 import java.rmi.RemoteException;
 import java.security.Key;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
+import java.util.HashMap;
 
 /**
 * Default (Template) Project: ${NAME}
 * @author robbe
 * @version 11/11/2024
 */public class ClientMain {
+
+    public ClientMain() {
+
+    }
+
+    public void run() {
+        JFrame frame = new JFrame("whatsapp 2");
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setLayout(new GridBagLayout());
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(5, 5, 5, 5);
+        gbc.anchor = GridBagConstraints.EAST; // Ensure proper alignment
+
+        // Add ContactSelector
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.weightx = 0.2; // Reset gridwidth
+        gbc.weighty = 1;
+
+
+        gbc.anchor = GridBagConstraints.CENTER; // Ensure proper alignment
+        gbc.fill = GridBagConstraints.BOTH;
+        HashMap<String, OtherUser> contacts = new HashMap<>();
+        frame.add(new ContactSelector(contacts), gbc);
+
+        // Add Label
+        gbc.gridx = 1;
+        gbc.gridy = 0;
+        gbc.weightx = 0.8; // Expand width
+        gbc.weighty = 1;
+
+        JLabel label = new JLabel("Hello world!");
+        frame.add(label, gbc);
+
+        frame.pack();
+        frame.setSize(400, 400);
+        frame.setVisible(true);
+    }
+
     public static void main(String[] args) throws Exception {
+        ClientMain clientMain = new ClientMain();
+        clientMain.run();
+    }
+
+
+    private static void testFn() throws Exception {
         System.out.println("Hello world!");
         BulletinBoard board = BoardFactory.getBulletinBoard();
 
