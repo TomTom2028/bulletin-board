@@ -5,7 +5,9 @@ import java.rmi.RemoteException;
 import java.security.Key;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 /**
 * Default (Template) Project: ${NAME}
@@ -34,7 +36,7 @@ import java.util.HashMap;
 
         gbc.anchor = GridBagConstraints.CENTER; // Ensure proper alignment
         gbc.fill = GridBagConstraints.BOTH;
-        HashMap<String, OtherUser> contacts = new HashMap<>();
+        List<OtherUser> contacts = new ArrayList<>();
         frame.add(new ContactSelector(contacts), gbc);
 
         // Add Label

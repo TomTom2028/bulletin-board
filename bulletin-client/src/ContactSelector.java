@@ -1,7 +1,12 @@
 import javax.swing.*;
 import javax.swing.border.Border;
+import javax.swing.event.ListDataEvent;
+import javax.swing.event.ListDataListener;
 import java.awt.*;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Random;
 
 /**
  * bulletin-board: ContactSelector
@@ -11,17 +16,36 @@ import java.util.HashMap;
  */
 
 
+class UserListModel extends AbstractListModel<String> {
+    private List<OtherUser> contacts;
+
+    public UserListModel(List<OtherUser> contacts) {
+        this.contacts = contacts;
+    }
+
+    @Override
+    public int getSize() {
+        return contacts.size();
+    }
+
+    @Override
+    public String getElementAt(int index) {
+        return contacts.get(index).getUsername();
+    }
+}
+
 
 
 public class ContactSelector extends JPanel {
 
     private ContactPanel contactPanel;
-    HashMap<String, OtherUser> contacts;
+    List<OtherUser> contacts;
 
 
     private class ContactPanel extends JPanel {
         public ContactPanel() {
             super();
+            setPreferredSize(new Dimension(200, 20));
 
             if (contacts.isEmpty()) {
                 setLayout(new GridLayout());
@@ -29,15 +53,19 @@ public class ContactSelector extends JPanel {
                 notFound.setHorizontalAlignment(JLabel.CENTER);
                 add(notFound) ;
             } else {
-                JPanel contactPanel = new JPanel();
-                contactPanel.setLayout(new BoxLayout(contactPanel, BoxLayout.Y_AXIS));
-
-                for (String key : contacts.keySet()) {
-                    contactPanel.add(new JLabel(key));
-                }
-                JScrollPane scrollPane = new JScrollPane(contactPanel);
+                setLayout(new BorderLayout ());
+                JList<OtherUser> contactList = new JList<>(contacts.toArray(new OtherUser[0]));
+                contactList.addListSelectionListener(e -> {
+                    System.out.println("Selected: " + contactList.getSelectedValue().getUuid());
+                });
+                contactList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+                contactList.setLayoutOrientation(JList.VERTICAL);
+                ScrollPane scrollPane = new ScrollPane();
+                scrollPane.add(contactList);
                 add(scrollPane);
             }
+
+
         }
     }
 
@@ -46,7 +74,7 @@ public class ContactSelector extends JPanel {
 
 
 
-    public ContactSelector(HashMap<String, OtherUser> contacts)
+    public ContactSelector(List<OtherUser> contacts)
     {
         super();
         setBorder(BorderFactory.createLineBorder(Color.BLACK));
@@ -69,7 +97,7 @@ public class ContactSelector extends JPanel {
             String userString = JOptionPane.showInputDialog("Enter base64 contaxt string");
             if (userString != null) {
                 try {
-                    contacts.put(userString, new OtherUser(null, null, "bob", null, null));
+                    contacts.add(new OtherUser(null, null, "bob", null, userString));
                     System.out.println("Added contact");
                     // remvoe and re add
                     remove(this.contactPanel);

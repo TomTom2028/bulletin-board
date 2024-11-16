@@ -24,4 +24,17 @@ public class OtherUser {
         this.messages = messages;
         this.uuid = uuid;
     }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public String getUuid() {
+        return uuid;
+    }
+
+    @Override
+    public String toString() {
+        return username;
+    }
 }
