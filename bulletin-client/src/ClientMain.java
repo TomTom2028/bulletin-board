@@ -54,6 +54,7 @@ import java.util.List;
     }
 
     public static void main(String[] args) throws Exception {
+        Database database = new Database();
         ClientMain clientMain = new ClientMain();
         clientMain.run();
     }
