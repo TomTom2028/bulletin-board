@@ -16,21 +16,21 @@ import java.util.Random;
  */
 
 
-class UserListModel extends AbstractListModel<String> {
-    private List<OtherUser> contacts;
 
-    public UserListModel(List<OtherUser> contacts) {
-        this.contacts = contacts;
-    }
-
+class UserCellRenderer extends DefaultListCellRenderer {
     @Override
-    public int getSize() {
-        return contacts.size();
-    }
-
-    @Override
-    public String getElementAt(int index) {
-        return contacts.get(index).getUsername();
+    public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+        super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+        OtherUser user = (OtherUser) value;
+        setText(user.getUsername());
+        if (isSelected) {
+            setBackground(Color.BLUE);
+            setForeground(Color.WHITE);
+        } else {
+            setBackground(Color.WHITE);
+            setForeground(Color.BLACK);
+        }
+        return this;
     }
 }
 
@@ -55,6 +55,7 @@ public class ContactSelector extends JPanel {
             } else {
                 setLayout(new BorderLayout ());
                 JList<OtherUser> contactList = new JList<>(contacts.toArray(new OtherUser[0]));
+                contactList.setCellRenderer(new UserCellRenderer());
                 contactList.addListSelectionListener(e -> {
                     System.out.println("Selected: " + contactList.getSelectedValue().getUuid());
                 });
