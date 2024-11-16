@@ -12,12 +12,50 @@ import java.util.Map;
  */
 
 class BoardCell {
-    Map<byte[], byte[]> datasets;
+    Map<CellKey, byte[]> datasets;
     public BoardCell() {
         datasets = new HashMap<>();
     }
 }
 
+
+class CellKey  {
+    public byte[] tagHash;
+    public CellKey(byte[] tagHash) {
+        this.tagHash = tagHash;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        final CellKey other = (CellKey) obj;
+        if (this.tagHash.length != other.tagHash.length) {
+            return false;
+        }
+
+        for (int i = 0; i < this.tagHash.length; i++) {
+            if (this.tagHash[i] != other.tagHash[i]) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        int hash = 7;
+        for (int i = 0; i < this.tagHash.length; i++) {
+            hash = 31 * hash + this.tagHash[i];
+        }
+        return hash;
+    }
+
+}
 
 
 
@@ -43,7 +81,7 @@ public class BulletinBoardImpl extends UnicastRemoteObject implements BulletinBo
         System.out.println("Writing to index " + idx);
         System.out.println("Data: " + new String(data));
         System.out.println("Tag: " + new String(tagHash));
-        board[idx].datasets.put(data, tagHash);
+        board[idx].datasets.put(new CellKey(tagHash), data);
     }
 
     @Override
@@ -56,9 +94,10 @@ public class BulletinBoardImpl extends UnicastRemoteObject implements BulletinBo
            BoardCell cell = board[idx];
            MessageDigest hashDigest = MessageDigest.getInstance("SHA-256");
            byte[] tagHash = hashDigest.digest(tag);
-           byte[] value = cell.datasets.getOrDefault(tagHash, null);
+           CellKey cellKey = new CellKey(tagHash);
+           byte[] value = cell.datasets.getOrDefault(cellKey, null);
            if (value != null) {
-               cell.datasets.remove(tagHash);
+               cell.datasets.remove(cellKey);
            }
            return value;
        } catch (Exception e) {

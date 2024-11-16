@@ -61,8 +61,19 @@ public class ClientApplication {
     }
 
 
-    public String receive() {
-        return "read thingy";
+    public String receive() throws Exception {
+        byte[] encrypted = board.get(idx, tag);
+        if (encrypted == null) {
+            return null;
+        }
+        Cipher cipher = Cipher.getInstance("AES");
+        cipher.init(Cipher.DECRYPT_MODE, sharedKey);
+        byte[] decrypted = cipher.doFinal(encrypted);
+        BoardContent content = BoardContent.fromByteArray(decrypted, tagSize);
+        this.idx = content.idx;
+        this.tag = content.tag;
+        rotateKey();
+        return content.message;
     }
 
 
