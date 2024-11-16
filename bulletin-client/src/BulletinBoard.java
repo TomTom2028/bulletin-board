@@ -8,6 +8,8 @@ import java.rmi.RemoteException;
  * @version 11/11/2024
  */
 public interface BulletinBoard extends Remote {
-    void post(String message) throws RemoteException;
-    String read() throws RemoteException;
+    public void write(int idx, byte[] data, byte[] tagHash) throws RemoteException;
+    public byte[] get(int idx, byte[] tag) throws RemoteException;
+
+    public ConnectionParams getConnectionParams() throws RemoteException;
 }
