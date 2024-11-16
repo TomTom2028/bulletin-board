@@ -1,16 +1,14 @@
-/**
- * bulletin-board: BoardContent
- *
- * @author robbe
- * @version 16/11/2024
- */
+
 
 public class BoardContent {
-    public String message;
+
+    public MessageType type;
+    public byte[] message;
     public int idx;
     public byte[] tag;
 
-    public BoardContent(String message, int idx, byte[] tag) {
+    public BoardContent(byte[] message, int idx, byte[] tag, MessageType type) {
+        this.type = type;
         this.message = message;
         this.idx = idx;
         this.tag = tag;
@@ -18,24 +16,36 @@ public class BoardContent {
 
 
     public byte[] toByteArray() {
-        byte[] messageBytes = message.getBytes();
         byte[] idxBytes = intToByteArray(this.idx);
-        byte[] bytes = new byte[messageBytes.length + idxBytes.length + tag.length];
-        System.arraycopy(messageBytes, 0, bytes, 0, messageBytes.length);
-        System.arraycopy(idxBytes, 0, bytes, messageBytes.length, idxBytes.length);
-        System.arraycopy(tag, 0, bytes, messageBytes.length + idxBytes.length, tag.length);
+        byte typeByte = (byte) type.ordinal();
+        byte[] bytes = new byte[1 + message.length + idxBytes.length + tag.length];
+
+        bytes[0] = typeByte; // Add type byte
+        System.arraycopy(message, 0, bytes, 1, message.length); // Start at index 1
+        System.arraycopy(idxBytes, 0, bytes, 1 + message.length, idxBytes.length); // After message
+        System.arraycopy(tag, 0, bytes, 1 + message.length + idxBytes.length, tag.length); // After idx
         return bytes;
     }
 
+
     public static BoardContent fromByteArray(byte[] bytes, int tagSize) {
-        byte[] messageBytes = new byte[bytes.length - Integer.BYTES - tagSize];
+        // Extract the type (first byte)
+        byte typeByte = bytes[0];
+        MessageType type = MessageType.values()[typeByte]; // Convert back to enum
+
+        // Adjust indices to match serialized order
+        int messageLength = bytes.length - 1 - Integer.BYTES - tagSize;
+        byte[] messageBytes = new byte[messageLength];
         byte[] idxBytes = new byte[Integer.BYTES];
         byte[] tag = new byte[tagSize];
-        System.arraycopy(bytes, 0, messageBytes, 0, messageBytes.length);
-        System.arraycopy(bytes, messageBytes.length, idxBytes, 0, Integer.BYTES);
-        System.arraycopy(bytes, messageBytes.length + Integer.BYTES, tag, 0, tagSize);
-        return new BoardContent(new String(messageBytes), byteArrayToInt(idxBytes), tag);
+
+        System.arraycopy(bytes, 1, messageBytes, 0, messageLength); // Start after type
+        System.arraycopy(bytes, 1 + messageLength, idxBytes, 0, Integer.BYTES); // After message
+        System.arraycopy(bytes, 1 + messageLength + Integer.BYTES, tag, 0, tagSize); // After idx
+
+        return new BoardContent(messageBytes, byteArrayToInt(idxBytes), tag, type);
     }
+
 
     public static byte[] intToByteArray(int value) {
         return new byte[] {

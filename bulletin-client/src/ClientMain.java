@@ -43,12 +43,17 @@ import java.security.SecureRandom;
 
 
             ClientApplication receiver = new ClientApplication(seed2, key, idx2, tag2, board);
-            client.send("Hello world!");
+            receiver.receiveBase64(client.generateBase64());
+            System.out.println("Client: " + client.receive());
+            client.send("Hello world!", MessageType.MESSAGE);
 
             System.out.println("Receiver: " + receiver.receive());
             System.out.println("Receiver: " + receiver.receive());
-            client.send("a fox can walk!");
+            client.send("a fox can walk!", MessageType.MESSAGE);
             System.out.println("Receiver: " + receiver.receive());
+
+            receiver.send("a receiver can also send messages", MessageType.MESSAGE);
+            System.out.println("Client: " + client.receive());
         }
     }
 }
