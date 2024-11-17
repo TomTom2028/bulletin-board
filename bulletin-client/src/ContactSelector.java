@@ -17,23 +17,6 @@ import java.util.Random;
 
 
 
-class UserCellRenderer extends DefaultListCellRenderer {
-    @Override
-    public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-        super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-        OtherUser user = (OtherUser) value;
-        setText(user.getUsername());
-        if (isSelected) {
-            setBackground(Color.BLUE);
-            setForeground(Color.WHITE);
-        } else {
-            setBackground(Color.WHITE);
-            setForeground(Color.BLACK);
-        }
-        return this;
-    }
-}
-
 
 
 public class ContactSelector extends JPanel {
@@ -55,9 +38,8 @@ public class ContactSelector extends JPanel {
             } else {
                 setLayout(new BorderLayout ());
                 JList<OtherUser> contactList = new JList<>(contacts.toArray(new OtherUser[0]));
-                contactList.setCellRenderer(new UserCellRenderer());
                 contactList.addListSelectionListener(e -> {
-                    System.out.println("Selected: " + contactList.getSelectedValue().getUuid());
+                    System.out.println("Selected: " + contactList.getSelectedValue());
                 });
                 contactList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
                 contactList.setLayoutOrientation(JList.VERTICAL);
@@ -70,12 +52,19 @@ public class ContactSelector extends JPanel {
         }
     }
 
+    private GridBagConstraints contactsGbc = new GridBagConstraints();
 
 
+    private void refreshALl() {
+        remove(this.contactPanel);
+        this.contactPanel = new ContactPanel();
+        add(this.contactPanel, contactsGbc);
+        revalidate();
+        repaint();
+    }
 
 
-
-    public ContactSelector(List<OtherUser> contacts)
+    public ContactSelector(List<OtherUser> contacts, BulletinBoard board, Database db)
     {
         super();
         setBorder(BorderFactory.createLineBorder(Color.BLACK));
@@ -85,12 +74,12 @@ public class ContactSelector extends JPanel {
         this.contacts = contacts;
         this.contactPanel = new ContactPanel();
 
-        GridBagConstraints contactsGbc = new GridBagConstraints();
         contactsGbc.weightx = 1;
         contactsGbc.weighty = 0.8;
         contactsGbc.gridx = 0;
         contactsGbc.gridy = 0;
         contactsGbc.fill = GridBagConstraints.BOTH;
+
         add(this.contactPanel, contactsGbc);
 
         JButton addContact = new JButton("Add contact");
@@ -98,14 +87,10 @@ public class ContactSelector extends JPanel {
             String userString = JOptionPane.showInputDialog("Enter base64 contaxt string");
             if (userString != null) {
                 try {
-                    contacts.add(new OtherUser(null, null, "bob", null, userString));
+                    //contacts.add(new OtherUser(null, null, "bob", null, userString));
                     System.out.println("Added contact");
                     // remvoe and re add
-                    remove(this.contactPanel);
-                    this.contactPanel = new ContactPanel();
-                    add(this.contactPanel, contactsGbc);
-                    revalidate();
-                    repaint();
+                   refreshALl();
                 } catch (Exception ex) {
                     ex.printStackTrace();
                 }
@@ -113,11 +98,32 @@ public class ContactSelector extends JPanel {
         });
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.weightx = 1;
-        gbc.weighty = 0.2;
+        gbc.weighty = 0.1;
         gbc.gridx = 0;
         gbc.gridy = 1;
         gbc.fill = GridBagConstraints.BOTH;
         add(addContact, gbc);
+
+        JButton createBase64 = new JButton("Create base64 to share");
+        createBase64.addActionListener(e -> {
+            try {
+                OtherUser pendingUser = OtherUser.createPendingUser(board, db);
+                contacts.add(pendingUser);
+                String base64 = pendingUser.getRecieverApp().generateBase64();
+                JOptionPane.showMessageDialog(this, "Base64: " + base64);
+                refreshALl();
+            } catch (Exception ex) {
+                // show error in dialog
+                JOptionPane.showMessageDialog(this, "Error: " + ex.getMessage());
+            }
+        });
+        gbc = new GridBagConstraints();
+        gbc.weightx = 1;
+        gbc.weighty = 0.1;
+        gbc.gridx = 0;
+        gbc.gridy = 2;
+        gbc.fill = GridBagConstraints.BOTH;
+        add(createBase64, gbc);
 
     }
 }

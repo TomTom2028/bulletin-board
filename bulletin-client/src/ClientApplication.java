@@ -45,6 +45,16 @@ public class ClientApplication {
         this.board = board;
     }
 
+    public ClientApplication(byte[] seed, Key intialKey, int initialIdx, byte[] initialTag, int n, int tagSize) throws RemoteException {
+        this.random = new SecureRandom(seed);
+        this.n = n;
+        this.tagSize = tagSize;
+        this.sharedKey = intialKey;
+        this.idx = initialIdx;
+        this.tag = initialTag;
+        this.board = board;
+    }
+
     // generate a base64 so another client can initiate a connection
     // this contains the initial key, the initial idx and the initial tag
     public String generateBase64() throws Exception {
@@ -185,5 +195,40 @@ public class ClientApplication {
         byte[] newKeyBytes = new byte[keyBytes.length];
         randomForKey.nextBytes(newKeyBytes);
         otherKey = new SecretKeySpec(newKeyBytes,0, newKeyBytes.length, "AES");
+    }
+
+
+    public static ClientApplication createReciever(BulletinBoard board) throws RemoteException, NoSuchAlgorithmException {
+        ConnectionParams params = board.getConnectionParams();
+        SecureRandom random = new SecureRandom();
+        byte[] seed = new byte[32];
+        random.nextBytes(seed);
+        KeyGenerator keyGen = KeyGenerator.getInstance("AES");
+        keyGen.init(256);
+        Key key = keyGen.generateKey();
+        byte[] tag = new byte[params.tagSize];
+        random.nextBytes(tag);
+        int idx = random.nextInt(params.n);
+        return new ClientApplication(seed, key, idx, tag, board);
+    }
+
+    public int getN() {
+        return n;
+    }
+
+    public int getTagSize() {
+        return tagSize;
+    }
+
+    public Key getSharedKey() {
+        return sharedKey;
+    }
+
+    public int getIdx() {
+        return idx;
+    }
+
+    public byte[] getTag() {
+        return tag;
     }
 }

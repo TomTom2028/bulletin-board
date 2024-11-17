@@ -15,8 +15,12 @@ import java.util.List;
 * @version 11/11/2024
 */public class ClientMain {
 
-    public ClientMain() {
+    Database database;
+    BulletinBoard board;
 
+    public ClientMain(BulletinBoard board, Database database) {
+        this.board = board;
+        this.database = database;
     }
 
     public void run() {
@@ -37,7 +41,7 @@ import java.util.List;
         gbc.anchor = GridBagConstraints.CENTER; // Ensure proper alignment
         gbc.fill = GridBagConstraints.BOTH;
         List<OtherUser> contacts = new ArrayList<>();
-        frame.add(new ContactSelector(contacts), gbc);
+        frame.add(new ContactSelector(contacts, board, database), gbc);
 
         // Add Label
         gbc.gridx = 1;
@@ -55,7 +59,8 @@ import java.util.List;
 
     public static void main(String[] args) throws Exception {
         Database database = new Database();
-        ClientMain clientMain = new ClientMain();
+        BulletinBoard board = BoardFactory.getBulletinBoard();
+        ClientMain clientMain = new ClientMain(board, database);
         clientMain.run();
     }
 
