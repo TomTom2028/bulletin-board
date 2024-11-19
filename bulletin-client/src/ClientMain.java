@@ -5,6 +5,7 @@ import java.rmi.RemoteException;
 import java.security.Key;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -41,6 +42,11 @@ import java.util.List;
         gbc.anchor = GridBagConstraints.CENTER; // Ensure proper alignment
         gbc.fill = GridBagConstraints.BOTH;
         List<OtherUser> contacts = new ArrayList<>();
+        try {
+            contacts.addAll(database.getOtherUsers());
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
         frame.add(new ContactSelector(contacts, board, database), gbc);
 
         // Add Label

@@ -21,14 +21,20 @@ public class OtherUser {
 
     private boolean pending;
 
+    private Database database;
 
-    private OtherUser(ClientApplication senderApp, ClientApplication recieverApp, String username, List<Message> messages, boolean pending, int id) {
+
+    private boolean initialized = false; //when not initalized only name, id and pending!
+
+    public OtherUser(ClientApplication senderApp, ClientApplication recieverApp, String username, List<Message> messages, boolean pending, int id, Database database, boolean initialized) {
         this.id = id;
         this.senderApp = senderApp;
         this.recieverApp = recieverApp;
         this.username = username;
         this.messages = messages;
         this.pending = pending;
+        this.database = database;
+        this.initialized = initialized;
     }
 
     @Override
@@ -42,7 +48,7 @@ public class OtherUser {
 
     public static OtherUser createPendingUser(BulletinBoard board, Database db) throws NoSuchAlgorithmException, RemoteException, SQLException {
         ClientApplication reciever = ClientApplication.createReciever(board);
-        OtherUser user = new OtherUser(null, reciever, null, new ArrayList<>(), true, -1);
+        OtherUser user = new OtherUser(null, reciever, null, new ArrayList<>(), true, -1, db, true);
         db.addRecieverUser(user);
         return user;
     }

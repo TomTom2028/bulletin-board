@@ -1,4 +1,6 @@
 import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * bulletin-board: Database
@@ -51,6 +53,21 @@ public class Database {
         statement.executeUpdate();
         user.setId(statement.getGeneratedKeys().getInt(1));
 
+    }
+
+
+    public List<OtherUser> getOtherUsers() throws SQLException {
+        //language=SQL
+        String sql = "SELECT id, username, pending FROM users";
+        ResultSet rs = connection.createStatement().executeQuery(sql);
+        List<OtherUser> users = new ArrayList<>();
+        while (rs.next()) {
+            int id = rs.getInt("id");
+            String username = rs.getString("username");
+            boolean pending = rs.getBoolean("pending");
+            users.add(new OtherUser(null, null, username, new ArrayList<>(), pending, id, this, false));
+        }
+        return users;
     }
 
 }
