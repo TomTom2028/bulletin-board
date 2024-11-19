@@ -23,6 +23,7 @@ public class ContactSelector extends JPanel {
 
     private ContactPanel contactPanel;
     List<OtherUser> contacts;
+    ContactSelectedCallback callback;
 
 
     private class ContactPanel extends JPanel {
@@ -39,7 +40,7 @@ public class ContactSelector extends JPanel {
                 setLayout(new BorderLayout ());
                 JList<OtherUser> contactList = new JList<>(contacts.toArray(new OtherUser[0]));
                 contactList.addListSelectionListener(e -> {
-                    System.out.println("Selected: " + contactList.getSelectedValue());
+                    callback.contactSelected(contactList.getSelectedValue());
                 });
                 contactList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
                 contactList.setLayoutOrientation(JList.VERTICAL);
@@ -64,9 +65,11 @@ public class ContactSelector extends JPanel {
     }
 
 
-    public ContactSelector(List<OtherUser> contacts, BulletinBoard board, Database db)
+
+    public ContactSelector(List<OtherUser> contacts, BulletinBoard board, Database db, ContactSelectedCallback callback)
     {
         super();
+        this.callback = callback;
         setBorder(BorderFactory.createLineBorder(Color.BLACK));
         setLayout(new GridBagLayout());
         // make boxlayout fill all available space

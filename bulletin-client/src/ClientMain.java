@@ -19,7 +19,11 @@ import java.util.List;
     Database database;
     BulletinBoard board;
 
+    OtherUser selectedContact;
+
+
     public ClientMain(BulletinBoard board, Database database) {
+        this.selectedContact = null;
         this.board = board;
         this.database = database;
     }
@@ -42,12 +46,31 @@ import java.util.List;
         gbc.anchor = GridBagConstraints.CENTER; // Ensure proper alignment
         gbc.fill = GridBagConstraints.BOTH;
         List<OtherUser> contacts = new ArrayList<>();
+
         try {
             contacts.addAll(database.getOtherUsers());
         } catch (SQLException e) {
             e.printStackTrace();
         }
-        frame.add(new ContactSelector(contacts, board, database), gbc);
+        MainWindow mainWindow = new MainWindow(selectedContact);
+
+        frame.add(new ContactSelector(contacts, board, database, new ContactSelectedCallback() {
+            @Override
+            public void contactSelected(OtherUser user) {
+                selectedContact = user;
+                try {
+                    selectedContact.initialise(board);
+                } catch (RemoteException | SQLException e) {
+                    // show error in dialog
+                    JOptionPane.showMessageDialog(frame, "Error: " + e.getMessage());
+                    e.printStackTrace();
+
+                }
+                System.out.println("Selected user: " + user);
+                mainWindow.refresh(selectedContact);
+
+            }
+        }), gbc);
 
         // Add Label
         gbc.gridx = 1;
@@ -55,8 +78,7 @@ import java.util.List;
         gbc.weightx = 0.8; // Expand width
         gbc.weighty = 1;
 
-        JLabel label = new JLabel("Hello world!");
-        frame.add(label, gbc);
+        frame.add(mainWindow, gbc);
 
         frame.pack();
         frame.setSize(400, 400);
