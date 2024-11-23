@@ -17,13 +17,17 @@ import java.sql.SQLException;
 public class MainWindow extends JPanel {
     private OtherUser selectedUser;
     private InternalMainWindow internalMainWindow;
+    ContactSelector contactSelector;
     public MainWindow(OtherUser selectedUser) {
         super();
         this.selectedUser = selectedUser;
         setLayout(new BorderLayout());
         this.internalMainWindow = new InternalMainWindow();
         add(this.internalMainWindow, BorderLayout.CENTER);
+    }
 
+    public void setContactSelector(ContactSelector contactSelector) {
+        this.contactSelector = contactSelector;
     }
 
 
@@ -103,9 +107,17 @@ public class MainWindow extends JPanel {
                 editNameButton.addActionListener(e -> {
                     String newName = JOptionPane.showInputDialog("Enter new name");
                     if (newName != null) {
+                        newName = newName.trim();
+                        if (newName.length() < 2) {
+                            JOptionPane.showMessageDialog(this, "Name must be at least 2 characters long");
+                            return;
+                        }
                         try {
                             selectedUser.setUsername(newName);
                             nameLabel.setText(newName);
+                            if (contactSelector != null) {
+                                contactSelector.refreshALl();
+                            }
                         } catch (SQLException throwables) {
                             // show error dialog
                             JOptionPane.showMessageDialog(this, "Error: " + throwables.getMessage());

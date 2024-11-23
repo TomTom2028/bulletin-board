@@ -52,9 +52,9 @@ import java.util.List;
         } catch (SQLException e) {
             e.printStackTrace();
         }
-        MainWindow mainWindow = new MainWindow(selectedContact);
 
-        frame.add(new ContactSelector(contacts, board, database, new ContactSelectedCallback() {
+        MainWindow mainWindow = new MainWindow(selectedContact);
+        ContactSelector contactSelector = new ContactSelector(contacts, board, database, new ContactSelectedCallback() {
             @Override
             public void contactSelected(OtherUser user) {
                 selectedContact = user;
@@ -70,7 +70,9 @@ import java.util.List;
                 mainWindow.refresh(selectedContact);
 
             }
-        }), gbc);
+        });
+        frame.add(contactSelector, gbc);
+        mainWindow.setContactSelector(contactSelector);
 
         // Add Label
         gbc.gridx = 1;

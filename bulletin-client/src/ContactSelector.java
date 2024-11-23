@@ -56,7 +56,7 @@ public class ContactSelector extends JPanel {
     private GridBagConstraints contactsGbc = new GridBagConstraints();
 
 
-    private void refreshALl() {
+    public void refreshALl() {
         remove(this.contactPanel);
         this.contactPanel = new ContactPanel();
         add(this.contactPanel, contactsGbc);
