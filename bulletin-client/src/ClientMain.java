@@ -17,11 +17,12 @@ import java.util.List;
 */public class ClientMain {
 
     public static void main(String[] args) throws Exception {
-        ClientMain first = createNewApplication("client.db", "Client 1");
-        ClientMain second = createNewApplication("client2.db", "Client 2");
-
-        first.run();
-        second.run();
+//        ClientMain first = createNewApplication("client.db", "Client 1");
+//        ClientMain second = createNewApplication("client2.db", "Client 2");
+//
+//        first.run();
+//        second.run();
+        testFn();
     }
 
 
@@ -150,17 +151,64 @@ import java.util.List;
 
 
             ClientApplication receiver = new ClientApplication(seed2, key, idx2, tag2, board);
+
+            // make second pair of users
+            byte[] seed3 = new byte[32];
+            hardCodedRandom.nextBytes(seed3);
+
+            byte[] tag3 = new byte[32];
+            hardCodedRandom.nextBytes(tag3);
+            int idx3 = hardCodedRandom.nextInt(10000);
+
+            byte[] seed4 = new byte[32];
+            System.arraycopy(seed3, 0, seed4, 0, seed3.length);
+            byte[] tag4 = new byte[32];
+            System.arraycopy(tag3, 0, tag4, 0, tag3.length);
+            int idx4 = idx3;
+
+            // use a different key
+            byte[] keyBytes2 = new byte[32];
+            hardCodedRandom.nextBytes(keyBytes2);
+            Key key2 = new SecretKeySpec(keyBytes2, 0, keyBytes2.length, "AES");
+
+//            ClientApplication client2 = new ClientApplication(seed3, key2, idx3, tag3, board);
+//            ClientApplication receiver2 = new ClientApplication(seed4, key2, idx4, tag4, board);
+//
+//            receiver2.receiveBase64(client2.generateBase64());
+//            System.out.println("Client2: " + client2.receive());
+
+
+            //client2.send("Hello world!", MessageType.MESSAGE);
+
             receiver.receiveBase64(client.generateBase64());
             System.out.println("Client: " + client.receive());
             client.send("Hello world!", MessageType.MESSAGE);
+            client.send("Hello world!2", MessageType.MESSAGE);
+            client.send("Hello world!3", MessageType.MESSAGE);
+            client.send("Hello world!4", MessageType.MESSAGE);
+            client.send("Hello world!5", MessageType.MESSAGE);
+            client.send("Hello world!6", MessageType.MESSAGE);
+
+            //System.out.println("Receiver2: " + receiver2.receive());
+
 
             System.out.println("Receiver: " + receiver.receive());
             System.out.println("Receiver: " + receiver.receive());
+            System.out.println("Receiver: " + receiver.receive());
+            System.out.println("Receiver: " + receiver.receive());
+            System.out.println("Receiver: " + receiver.receive());
+            System.out.println("Receiver: " + receiver.receive());
+
             client.send("a fox can walk!", MessageType.MESSAGE);
             System.out.println("Receiver: " + receiver.receive());
+            System.out.println("Receiver: " + receiver.receive());
+
 
             receiver.send("a receiver can also send messages", MessageType.MESSAGE);
             System.out.println("Client: " + client.receive());
+
+            receiver.send("a receiver can also send messages", MessageType.MESSAGE);
+
         }
     }
 }

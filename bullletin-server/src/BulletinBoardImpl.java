@@ -1,6 +1,7 @@
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.security.MessageDigest;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -61,9 +62,11 @@ class CellKey  {
 
 public class BulletinBoardImpl extends UnicastRemoteObject implements BulletinBoard {
 
-    public static final int N = 10000;
+    public static int N = 1;
     public static final int TAG_SIZE = 32;
     private BoardCell[] board = new BoardCell[N];
+    private BoardCell[] transitionBoard = null;
+    private int delta = 0;
 
     protected BulletinBoardImpl() throws RemoteException {
         super();
@@ -78,35 +81,96 @@ public class BulletinBoardImpl extends UnicastRemoteObject implements BulletinBo
         if (idx >= N || idx < 0) {
             return;
         }
-        System.out.println("Writing to index " + idx);
-        System.out.println("Data: " + new String(data));
-        System.out.println("Tag: " + new String(tagHash));
-        board[idx].datasets.put(new CellKey(tagHash), data);
+
+        if (transitionBoard != null && idx < transitionBoard.length) {
+            // If resizing, write to the transition board.
+            transitionBoard[idx].datasets.put(new CellKey(tagHash), data);
+        } else {
+            // Regular write to the main board.
+            board[idx].datasets.put(new CellKey(tagHash), data);
+        }
+        delta++; // Increment the message count.
+        checkResize(); // Check if resizing is needed.
     }
 
     @Override
-    public byte[] get(int idx, byte[] tag) throws RemoteException {
-       try {
-           if (idx >= N || idx < 0) {
-               return null;
-           }
+    public synchronized byte[] get(int idx, byte[] tag) throws RemoteException {
+        try {
+            if (idx < 0) {
+                System.out.println("Invalid index.");
+                return null;
+            }
 
-           BoardCell cell = board[idx];
-           MessageDigest hashDigest = MessageDigest.getInstance("SHA-256");
-           byte[] tagHash = hashDigest.digest(tag);
-           CellKey cellKey = new CellKey(tagHash);
-           byte[] value = cell.datasets.getOrDefault(cellKey, null);
-           if (value != null) {
-               cell.datasets.remove(cellKey);
-           }
-           return value;
-       } catch (Exception e) {
-           return null;
-       }
+            MessageDigest hashDigest = MessageDigest.getInstance("SHA-256");
+            byte[] tagHash = hashDigest.digest(tag);
+            CellKey cellKey = new CellKey(tagHash);
+
+            // Check both boards during transition.
+            byte[] value = null;
+            if (board[idx] != null) {
+                value = board[idx].datasets.remove(cellKey);
+            }
+            if (value == null && transitionBoard != null && idx < transitionBoard.length) {
+                System.out.println("Checking transition board.");
+                value = transitionBoard[idx].datasets.remove(cellKey);
+            }
+
+            if (value != null) {
+                delta--; // Decrement the message count.
+                //checkResize(); // Check if resizing is needed.
+            }
+            return value;
+        } catch (Exception e) {
+            return null;
+        }
     }
+
+    private boolean isBoardEmpty(BoardCell[] boardToCheck) {
+        if (boardToCheck == null) {
+            return true;
+        }
+        for (BoardCell cell : boardToCheck) {
+            if (cell != null && !cell.datasets.isEmpty()) {
+                return false; // Board is not empty if any dataset is non-empty.
+            }
+        }
+        return true; // All cells are empty.
+    }
+
+    private synchronized void checkResize() {
+        // If board is too full, create a larger transition board.
+        if (delta > N * 0.8 && transitionBoard == null) {
+            startResize(N * 2);
+        }
+        // If board is too empty, create a smaller transition board.
+        if (delta < N * 0.2 && transitionBoard == null) {
+            startResize(N / 2);
+        }
+
+        // Clean up old board if it is empty.
+        // Clean up old board if it is actually empty.
+        if (transitionBoard != null && isBoardEmpty(board)) {
+            System.out.println("Cleaning up old board.");
+            board = transitionBoard;
+            transitionBoard = null;
+            N = board.length;
+        }
+    }
+
+    private void startResize(int newSize) {
+        System.out.println("Resizing board to size: " + newSize);
+        transitionBoard = new BoardCell[newSize];
+        for (int i = 0; i < newSize; i++) {
+            transitionBoard[i] = new BoardCell();
+        }
+    }
+
 
     @Override
     public ConnectionParams getConnectionParams() throws RemoteException {
-        return new ConnectionParams(N, TAG_SIZE);
+        int currentBoardSize = (transitionBoard != null) ? transitionBoard.length : N;
+        boolean resizing = transitionBoard != null;
+        boolean resizingUp = transitionBoard != null && transitionBoard.length > N;
+        return new ConnectionParams(currentBoardSize, TAG_SIZE, resizing, resizingUp);
     }
 }
