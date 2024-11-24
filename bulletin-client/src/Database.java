@@ -16,9 +16,9 @@ import java.util.List;
 
 public class Database {
     Connection connection;
-    public Database() throws SQLException, ClassNotFoundException {
+    public Database(String filepath) throws SQLException, ClassNotFoundException {
         Class.forName("org.sqlite.JDBC");
-        connection = DriverManager.getConnection("jdbc:sqlite:client.db");
+        connection = DriverManager.getConnection("jdbc:sqlite:" + filepath);
         //language=SQL
         runStatement("CREATE TABLE IF NOT EXISTS users (" +
                 "id INTEGER PRIMARY KEY AUTOINCREMENT," +

@@ -16,20 +16,46 @@ import java.util.List;
 * @version 11/11/2024
 */public class ClientMain {
 
+    public static void main(String[] args) throws Exception {
+        ClientMain first = createNewApplication("client.db", "Client 1");
+        ClientMain second = createNewApplication("client2.db", "Client 2");
+
+        first.run();
+        second.run();
+    }
+
+
     Database database;
     BulletinBoard board;
 
     OtherUser selectedContact;
 
+    String appTitle;
 
-    public ClientMain(BulletinBoard board, Database database) {
+
+    public ClientMain(BulletinBoard board, Database database, String appTitle) {
         this.selectedContact = null;
         this.board = board;
         this.database = database;
+        this.appTitle = appTitle;
     }
 
+
+    public static ClientMain createNewApplication(String databasePath, String appTitle) throws SQLException, ClassNotFoundException {
+        Database database = new Database(databasePath);
+        BulletinBoard board = BoardFactory.getBulletinBoard();
+        if (board == null) {
+            throw new RuntimeException("Could not connect to the bulletin board!");
+        }
+
+        return new ClientMain(board, database, appTitle);
+    }
+
+
+
+
     public void run() {
-        JFrame frame = new JFrame("whatsapp 2");
+        JFrame frame = new JFrame(appTitle);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setLayout(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();
@@ -87,12 +113,7 @@ import java.util.List;
         frame.setVisible(true);
     }
 
-    public static void main(String[] args) throws Exception {
-        Database database = new Database();
-        BulletinBoard board = BoardFactory.getBulletinBoard();
-        ClientMain clientMain = new ClientMain(board, database);
-        clientMain.run();
-    }
+
 
 
     private static void testFn() throws Exception {
