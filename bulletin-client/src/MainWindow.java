@@ -1,6 +1,11 @@
 import javax.swing.*;
 import java.awt.*;
 import java.sql.SQLException;
+import java.sql.Timestamp;
+import java.time.LocalDateTime;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 /**
  * bulletin-board: MainWindow
@@ -18,6 +23,9 @@ public class MainWindow extends JPanel {
     private OtherUser selectedUser;
     private InternalMainWindow internalMainWindow;
     ContactSelector contactSelector;
+
+    ScheduledExecutorService executorService;
+
     public MainWindow(OtherUser selectedUser) {
         super();
         this.selectedUser = selectedUser;
@@ -78,7 +86,9 @@ public class MainWindow extends JPanel {
                 if (isPending) {
                     messageArea.setText("This user is pending");
                 } else {
-                    // TODO! Add messages
+                    for (Message message : selectedUser.getMessages()) {
+                        messageArea.append(message.toFormattedString(selectedUser) + "\n");
+                    }
                 }
 
                 // Bottom section: TextField and Send button
@@ -125,12 +135,53 @@ public class MainWindow extends JPanel {
                         }
                     }
                 });
+
+                sendButton.addActionListener(e -> {
+                    String messageText = messageField.getText().trim();
+                    if (!messageText.isEmpty()) {
+                        try {
+                            Message newMessage = new Message(messageText, LocalDateTime.now().toString(), true );
+                            selectedUser.sendMessage(newMessage);
+                            messageField.setText("");
+                            messageArea.append(newMessage.toFormattedString(selectedUser) + "\n");
+                        } catch (Exception ex) {
+                            // show error dialog
+                            JOptionPane.showMessageDialog(this, "Error: " + ex.getMessage());
+                            ex.printStackTrace();
+                        }
+                    }
+                });
+
+
+                // task to periodically update the messages
+                if (selectedUser.getApplication().canReceive()) {
+                    executorService = Executors.newScheduledThreadPool(1);
+                    executorService.scheduleAtFixedRate(() -> {
+                        int prevMessageCount = selectedUser.getMessages().size();
+                        if (selectedUser.updateMessages()) {
+                            messageArea.setText("");
+                            refresh(selectedUser);
+                        } else {
+                            if (selectedUser.getMessages().size() > prevMessageCount) {
+                                Iterable<Message> newMessages = selectedUser.getMessages().subList(prevMessageCount, selectedUser.getMessages().size());
+                                for (Message message : newMessages) {
+                                    messageArea.append(message.toFormattedString(selectedUser) + "\n");
+                                }
+                            }
+
+                        }
+                    }, 0, 4, TimeUnit.SECONDS);
+                }
+
             }
         }
     }
 
 
     public void refresh(OtherUser selectedUser) {
+        if (executorService != null) {
+            executorService.shutdown();
+        }
         this.selectedUser = selectedUser;
         remove(this.internalMainWindow);
         this.internalMainWindow = new InternalMainWindow();

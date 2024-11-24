@@ -16,4 +16,8 @@ public class Message {
         this.sendTime = sendTime;
         this.sendByMe = sendByMe;
     }
+
+    public String toFormattedString(OtherUser user) {
+        return (sendByMe ? "You" : user.getUsername()) + " (" + sendTime + "): " + content;
+    }
 }

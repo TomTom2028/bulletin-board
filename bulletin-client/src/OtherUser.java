@@ -1,5 +1,6 @@
 import java.rmi.RemoteException;
 import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -13,9 +14,7 @@ import java.util.List;
  */
 
 public class OtherUser {
-    private ClientApplication senderApp;
-    private ClientApplication recieverApp;
-
+    private ClientApplication application;
     private String username;
     private List<Message> messages;
     private int id;
@@ -28,10 +27,9 @@ public class OtherUser {
 
     private boolean initialized = false; //when not initalized only name, id and pending!
 
-    public OtherUser(ClientApplication senderApp, ClientApplication recieverApp, String username, List<Message> messages, boolean pending, int id, Database database, boolean initialized, LocalDateTime addedAt) {
+    public OtherUser(ClientApplication application, String username, List<Message> messages, boolean pending, int id, Database database, boolean initialized, LocalDateTime addedAt) {
         this.id = id;
-        this.senderApp = senderApp;
-        this.recieverApp = recieverApp;
+        this.application = application;
         this.username = username;
         this.messages = messages;
         this.pending = pending;
@@ -56,11 +54,10 @@ public class OtherUser {
         return formatted;
     }
 
-    public static OtherUser createPendingUser(BulletinBoard board, Database db) throws NoSuchAlgorithmException, RemoteException, SQLException {
-        ClientApplication reciever = ClientApplication.createReciever(board);
+    public static OtherUser createPendingRecieverUser(BulletinBoard board, Database db) throws NoSuchAlgorithmException, RemoteException, SQLException {
+        ClientApplication application = new ClientApplication(new SecureRandom().generateSeed(32), board);
 
-        OtherUser user = new OtherUser(null, reciever, null, new ArrayList<>(), true, -1, db, true, LocalDateTime.now());
-        db.addRecieverUser(user);
+        OtherUser user = new OtherUser(application, null, new ArrayList<>(), true, -1, db, true, LocalDateTime.now());
         return user;
     }
 
@@ -68,13 +65,6 @@ public class OtherUser {
         return addedAt;
     }
 
-    public ClientApplication getSenderApp() {
-        return senderApp;
-    }
-
-    public ClientApplication getRecieverApp() {
-        return recieverApp;
-    }
 
     public String getUsername() {
         return username;
@@ -101,13 +91,6 @@ public class OtherUser {
         database.updateUsername(this, username);
     }
 
-    public void setSenderApp(ClientApplication senderApp) {
-        this.senderApp = senderApp;
-    }
-    public void setRecieverApp(ClientApplication recieverApp) {
-        this.recieverApp = recieverApp;
-    }
-
     public void initialise(BulletinBoard board) throws SQLException, RemoteException {
         if (!initialized) {
             try {
@@ -118,4 +101,63 @@ public class OtherUser {
             }
         }
     }
+
+    // also generates base64
+    public String createReciever() throws Exception {
+        String base64String = this.application.generateBase64();
+        this.database.addRecieverUser(this);
+        return base64String;
+    }
+
+    public ClientApplication getApplication() {
+        return application;
+    }
+
+    public void setApplication(ClientApplication application) {
+        this.application = application;
+    }
+
+    public static OtherUser createFromBase64(String base64, BulletinBoard board, Database db) throws Exception {
+        ClientApplication application = new ClientApplication(new SecureRandom().generateSeed(32), board);
+        application.receiveBase64(base64);
+        OtherUser user = new OtherUser(application, null, new ArrayList<>(), false, -1, db, true, LocalDateTime.now());
+        db.addCompleteUser(user);
+        return user;
+    }
+
+    // returns true if the used changed fundamentally
+    public boolean updateMessages() {
+        boolean shouldUpdate = false;
+        try {
+
+            ReceiveData data = null;
+            do {
+                data = application.receive();
+                if (data == null) {
+                    break;
+                }
+                if (data.type == MessageType.MESSAGE) {
+                    messages.add(new Message(data.message, LocalDateTime.now().toString(), false));
+                } else if (data.type == MessageType.INIT) {
+                    this.application.initalizeSenderPartFromBase64(data.message);
+                    this.pending = false;
+                    database.updateCompleteUser(this);
+                    shouldUpdate = true;
+                } else {
+                    throw new RuntimeException("Unknown message type");
+                }
+            } while(true);
+            return shouldUpdate;
+
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public void sendMessage(Message message) throws Exception {
+        this.messages.add(message);
+        application.send(message.content, MessageType.MESSAGE);
+    }
+
+
 }

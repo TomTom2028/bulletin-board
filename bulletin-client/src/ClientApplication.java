@@ -34,6 +34,32 @@ public class ClientApplication {
 
     private BulletinBoard board;
 
+    // contains everything!
+    public ClientApplication(byte[] seed, Key sharedKey, Key otherKey, int idx, byte[] tag, int otherIdx, byte[] otherTag, BulletinBoard board) throws RemoteException {
+        this.random = new SecureRandom(seed);
+        ConnectionParams params = board.getConnectionParams();
+        this.n = params.n;
+        this.tagSize = params.tagSize;
+        this.sharedKey = sharedKey;
+        this.otherKey = otherKey;
+        this.idx = idx;
+        this.tag = tag;
+        this.otherIdx = otherIdx;
+        this.otherTag = otherTag;
+        this.board = board;
+
+    }
+
+    public ClientApplication(byte[] seed, BulletinBoard board) throws RemoteException {
+        // most things are not initialized yet
+        this.random = new SecureRandom(seed);
+        ConnectionParams params = board.getConnectionParams();
+        this.n = params.n;
+        this.tagSize = params.tagSize;
+        this.board = board;
+    }
+
+
     public ClientApplication(byte[] seed, Key intialKey, int initialIdx, byte[] initialTag, BulletinBoard board) throws RemoteException {
         this.random = new SecureRandom(seed);
         ConnectionParams params = board.getConnectionParams();
@@ -71,7 +97,7 @@ public class ClientApplication {
 
         // generate tag
         otherTag = new byte[tagSize];
-        random.nextBytes(tag);
+        random.nextBytes(otherTag);
 
         System.out.println("Generating base64");
         String base64 = Base64.getEncoder().encodeToString(((SecretKeySpec) otherKey).getEncoded()) + " " + otherIdx + " " + Base64.getEncoder().encodeToString(otherTag);
@@ -117,6 +143,17 @@ public class ClientApplication {
     }
 
 
+    public void initalizeSenderPartFromBase64(String base64) {
+        String[] parts = base64.split(" ");
+        byte[] keyBytes = Base64.getDecoder().decode(parts[0]);
+        int idx = Integer.parseInt(parts[1]);
+        byte[] tag = Base64.getDecoder().decode(parts[2]);
+        this.sharedKey = new SecretKeySpec(keyBytes, 0, keyBytes.length, "AES");
+        this.idx = idx;
+        this.tag = tag;
+    }
+
+
     public void send (String message, MessageType type) throws Exception {
 
         int idxNext = random.nextInt(n);
@@ -138,7 +175,7 @@ public class ClientApplication {
     }
 
 
-    public String receive() throws Exception {
+    public ReceiveData receive() throws Exception {
         byte[] encrypted = board.get(otherIdx, otherTag);
         if (encrypted == null) {
             return null;
@@ -151,23 +188,8 @@ public class ClientApplication {
         this.otherTag = content.tag;
         // TODO: probable issue rotate other guys key not ours
         rotateOtherKey();
-        if(content.type == MessageType.INIT) {
-            System.out.println("Received INIT");
-            // get the key, idx and tag from the message base64
-            String base64 = new String(content.message);
-            String[] parts = base64.split(" ");
-            byte[] keyBytes = Base64.getDecoder().decode(parts[0]);
-            int idx = Integer.parseInt(parts[1]);
-            byte[] tag = Base64.getDecoder().decode(parts[2]);
-            this.sharedKey = new SecretKeySpec(keyBytes, 0, keyBytes.length, "AES");
-            this.idx = idx;
-            this.tag = tag;
-            return "INIT SUCCES";
-        }
-        else {
-            return new String(content.message);
-        }
-        // return content.message;
+
+        return new ReceiveData(new String(content.message), content.type);
     }
 
 
@@ -198,6 +220,7 @@ public class ClientApplication {
     }
 
 
+    /*
     public static ClientApplication createReciever(BulletinBoard board) throws RemoteException, NoSuchAlgorithmException {
         ConnectionParams params = board.getConnectionParams();
         SecureRandom random = new SecureRandom();
@@ -210,7 +233,7 @@ public class ClientApplication {
         random.nextBytes(tag);
         int idx = random.nextInt(params.n);
         return new ClientApplication(seed, key, idx, tag, board);
-    }
+    }*/
 
     public int getN() {
         return n;
@@ -218,6 +241,18 @@ public class ClientApplication {
 
     public int getTagSize() {
         return tagSize;
+    }
+
+    public Key getOtherKey() {
+        return otherKey;
+    }
+
+    public int getOtherIdx() {
+        return otherIdx;
+    }
+
+    public byte[] getOtherTag() {
+        return otherTag;
     }
 
     public Key getSharedKey() {
@@ -231,4 +266,9 @@ public class ClientApplication {
     public byte[] getTag() {
         return tag;
     }
+
+    public boolean canReceive() {
+        return otherKey != null && otherTag != null;
+    }
+
 }

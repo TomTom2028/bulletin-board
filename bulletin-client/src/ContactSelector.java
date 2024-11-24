@@ -1,12 +1,6 @@
 import javax.swing.*;
-import javax.swing.border.Border;
-import javax.swing.event.ListDataEvent;
-import javax.swing.event.ListDataListener;
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Random;
 
 /**
  * bulletin-board: ContactSelector
@@ -87,15 +81,19 @@ public class ContactSelector extends JPanel {
 
         JButton addContact = new JButton("Add contact");
         addContact.addActionListener(e -> {
-            String userString = JOptionPane.showInputDialog("Enter base64 contaxt string");
+            String userString = JOptionPane.showInputDialog("Enter base64 contact string");
             if (userString != null) {
                 try {
+                    OtherUser user = OtherUser.createFromBase64(userString, board, db);
+                    contacts.add(user);
+                    // show success dialog
+                    JOptionPane.showMessageDialog(this, "Contact added successfully");
                     //contacts.add(new OtherUser(null, null, "bob", null, userString));
-                    System.out.println("Added contact");
-                    // remvoe and re add
                    refreshALl();
                 } catch (Exception ex) {
                     ex.printStackTrace();
+                    // show error in dialog
+                    JOptionPane.showMessageDialog(this, "Error: " + ex.getMessage());
                 }
             }
         });
@@ -110,9 +108,10 @@ public class ContactSelector extends JPanel {
         JButton createBase64 = new JButton("Create base64 to share");
         createBase64.addActionListener(e -> {
             try {
-                OtherUser pendingUser = OtherUser.createPendingUser(board, db);
+                OtherUser pendingUser = OtherUser.createPendingRecieverUser(board, db);
                 contacts.add(pendingUser);
-                String base64 = pendingUser.getRecieverApp().generateBase64();
+                String base64 = pendingUser.createReciever();
+                //TODO: make this show in a dialog or somehting like that
                 JOptionPane.showMessageDialog(this, "Base64: " + base64);
                 refreshALl();
             } catch (Exception ex) {
