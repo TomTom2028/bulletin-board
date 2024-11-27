@@ -174,6 +174,40 @@ public class ClientApplication {
         rotateKey();
     }
 
+    public static byte[] intToByteArray(int value) {
+        return new byte[] {
+                (byte)(value >>> 24),
+                (byte)(value >>> 16),
+                (byte)(value >>> 8),
+                (byte)value};
+    }
+
+    public void sendBytes(byte[] data) throws Exception {
+        int idxNext = random.nextInt(n);
+        byte[] tagNext = generateTag();
+        //BoardContent content = new BoardContent(data, idxNext, tagNext, type);
+        Cipher cipher = Cipher.getInstance("AES");
+
+        // combine idx, tag and then data into one byte array
+        byte[] idxBytes = intToByteArray(idxNext);
+        byte[] combined = new byte[idxBytes.length + tagNext.length + data.length];
+        System.arraycopy(idxBytes, 0, combined, 0, idxBytes.length);
+        System.arraycopy(tagNext, 0, combined, idxBytes.length, tagNext.length);
+        System.arraycopy(data, 0, combined, idxBytes.length + tagNext.length, data.length);
+
+
+        cipher.init(Cipher.ENCRYPT_MODE, sharedKey);
+        byte[] encrypted = cipher.doFinal(combined);
+
+        MessageDigest hashDigest = MessageDigest.getInstance("SHA-256");
+        byte[] tagHash = hashDigest.digest(tag);
+
+        board.write(idx, encrypted, tagHash);
+        this.idx = idxNext;
+        this.tag = tagNext;
+        rotateKey();
+    }
+
 
     public ReceiveData receive() throws Exception {
         byte[] encrypted = board.get(otherIdx, otherTag);
@@ -190,6 +224,42 @@ public class ClientApplication {
         rotateOtherKey();
 
         return new ReceiveData(new String(content.message), content.type);
+    }
+
+    public static int byteArrayToInt(byte[] bytes) {
+        return ((bytes[0] & 0xFF) << 24) |
+                ((bytes[1] & 0xFF) << 16) |
+                ((bytes[2] & 0xFF) << 8 ) |
+                ((bytes[3] & 0xFF));
+
+    }
+
+    public byte[] receiveBytes() throws Exception {
+        byte[] encrypted = board.get(otherIdx, otherTag);
+        if (encrypted == null) {
+            return null;
+        }
+        Cipher cipher = Cipher.getInstance("AES");
+        cipher.init(Cipher.DECRYPT_MODE, otherKey);
+        byte[] decrypted = cipher.doFinal(encrypted);
+
+        // unravel byte array first is idx, then tag, then data
+
+        byte[] idxBytes = new byte[Integer.BYTES];
+        byte[] tag = new byte[tagSize];
+        byte[] data = new byte[decrypted.length - Integer.BYTES - tagSize];
+
+        System.arraycopy(decrypted, 0, idxBytes, 0, Integer.BYTES);
+        System.arraycopy(decrypted, Integer.BYTES, tag, 0, tagSize);
+        System.arraycopy(decrypted, Integer.BYTES + tagSize, data, 0, data.length);
+
+        //BoardContent content = BoardContent.fromByteArray(decrypted, tagSize);
+        this.otherIdx = byteArrayToInt(idxBytes);
+        this.otherTag = tag;
+        // TODO: probable issue rotate other guys key not ours
+        rotateOtherKey();
+
+        return data;
     }
 
 
