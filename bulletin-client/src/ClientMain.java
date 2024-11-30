@@ -3,11 +3,9 @@ import javax.swing.*;
 import java.awt.*;
 import java.rmi.RemoteException;
 import java.security.Key;
-import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 
 /**
@@ -150,7 +148,8 @@ import java.util.List;
 
 
             ClientApplication receiver = new ClientApplication(seed2, key, idx2, tag2, board);
-            receiver.receiveBase64(client.generateBase64());
+            //receiver.receiveKeyTransferDTO(client.generateBase64());
+           /*
             System.out.println("Client: " + client.receive());
             client.send("Hello world!", MessageType.MESSAGE);
 
@@ -160,7 +159,7 @@ import java.util.List;
             System.out.println("Receiver: " + receiver.receive());
 
             receiver.send("a receiver can also send messages", MessageType.MESSAGE);
-            System.out.println("Client: " + client.receive());
+            System.out.println("Client: " + client.receive());*/
         }
     }
 }

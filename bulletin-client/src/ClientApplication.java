@@ -1,14 +1,11 @@
 import javax.crypto.Cipher;
 import javax.crypto.KeyGenerator;
-import javax.crypto.NoSuchPaddingException;
 import javax.crypto.spec.SecretKeySpec;
 import java.rmi.RemoteException;
 import java.security.Key;
 import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.util.Base64;
-import java.util.Random;
 
 /**
  * bulletin-board: ClientApplication
@@ -83,7 +80,7 @@ public class ClientApplication {
 
     // generate a base64 so another client can initiate a connection
     // this contains the initial key, the initial idx and the initial tag
-    public String generateBase64() throws Exception {
+    public KeyTransferDTO generateKeyTransferDTOForOtherParty() throws Exception {
         // make the otherkey, otheridx and othertag
         // send the otherkey, otheridx and othertag to the other client
 
@@ -98,22 +95,19 @@ public class ClientApplication {
         // generate tag
         otherTag = new byte[tagSize];
         random.nextBytes(otherTag);
-
-        System.out.println("Generating base64");
-        String base64 = Base64.getEncoder().encodeToString(((SecretKeySpec) otherKey).getEncoded()) + " " + otherIdx + " " + Base64.getEncoder().encodeToString(otherTag);
-        System.out.println("Generated base64: " + base64);
-        return base64;
+        return new KeyTransferDTO(((SecretKeySpec) otherKey).getEncoded(), otherIdx, otherTag);
     }
 
     // what to do upon receiving a base64 from another client
     // this will set the initial key, the initial idx and the initial tag
     // we then generate a key, idx and tag for the other user
     // we then send a message to the other user containing this info
-    public void receiveBase64(String base64) {
-        String[] parts = base64.split(" ");
-        byte[] keyBytes = Base64.getDecoder().decode(parts[0]);
-        int idx = Integer.parseInt(parts[1]);
-        byte[] tag = Base64.getDecoder().decode(parts[2]);
+    public void receiveKeyTransferDTO(KeyTransferDTO dto) {
+
+        byte[] keyBytes = dto.key;
+        int idx = dto.idx;
+        byte[] tag = dto.tag;
+
         this.sharedKey = new SecretKeySpec(keyBytes, 0, keyBytes.length, "AES");
         this.idx = idx;
         this.tag = tag;
@@ -132,28 +126,41 @@ public class ClientApplication {
             otherTag = new byte[tagSize];
             random.nextBytes(otherTag);
 
-            // generate base64
-            String newBase64 = Base64.getEncoder().encodeToString(((SecretKeySpec) otherKey).getEncoded()) + " " + otherIdx + " " + Base64.getEncoder().encodeToString(otherTag);
-
-
-            send(newBase64, MessageType.INIT);
+            // generate key transfer dto and send it
+            KeyTransferDTO keyTransferDTO = new KeyTransferDTO(((SecretKeySpec) otherKey).getEncoded(), otherIdx, otherTag);
+            sendRawMessage(RawMessage.fromKeyTransferDTO(keyTransferDTO));
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
 
-    public void initalizeSenderPartFromBase64(String base64) {
-        String[] parts = base64.split(" ");
-        byte[] keyBytes = Base64.getDecoder().decode(parts[0]);
-        int idx = Integer.parseInt(parts[1]);
-        byte[] tag = Base64.getDecoder().decode(parts[2]);
+    public void sendRawMessage(RawMessage message) throws Exception {
+        byte[] data = message.toByteArray();
+        sendBytes(data);
+    }
+
+    public RawMessage receiveRawMessage() throws Exception {
+        byte[] data = receiveBytes();
+        if (data == null) {
+            return null;
+        }
+        return RawMessage.fromByteArray(data);
+    }
+
+
+
+    public void initalizeSenderPartFromDto(KeyTransferDTO dto) {
+        byte[] keyBytes = dto.key;
+        int idx = dto.idx;
+        byte[] tag = dto.tag;
         this.sharedKey = new SecretKeySpec(keyBytes, 0, keyBytes.length, "AES");
         this.idx = idx;
         this.tag = tag;
     }
 
 
+    /*
     public void send (String message, MessageType type) throws Exception {
 
         int idxNext = random.nextInt(n);
@@ -172,7 +179,7 @@ public class ClientApplication {
         this.idx = idxNext;
         this.tag = tagNext;
         rotateKey();
-    }
+    }*/
 
     public static byte[] intToByteArray(int value) {
         return new byte[] {
@@ -209,6 +216,7 @@ public class ClientApplication {
     }
 
 
+    /*
     public ReceiveData receive() throws Exception {
         byte[] encrypted = board.get(otherIdx, otherTag);
         if (encrypted == null) {
@@ -224,7 +232,7 @@ public class ClientApplication {
         rotateOtherKey();
 
         return new ReceiveData(new String(content.message), content.type);
-    }
+    }*/
 
     public static int byteArrayToInt(byte[] bytes) {
         return ((bytes[0] & 0xFF) << 24) |

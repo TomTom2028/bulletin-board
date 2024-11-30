@@ -4,6 +4,7 @@ import java.security.SecureRandom;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.List;
 
 /**
@@ -104,7 +105,10 @@ public class OtherUser {
 
     // also generates base64
     public String createReciever() throws Exception {
-        String base64String = this.application.generateBase64();
+        KeyTransferDTO dto = this.application.generateKeyTransferDTOForOtherParty();
+        byte[] dtoBytes = ObjectSerializer.serialize(dto);
+        String base64String = Base64.getEncoder().encodeToString(dtoBytes);
+        System.out.println("Base64: " + base64String);
         this.database.addRecieverUser(this);
         return base64String;
     }
@@ -118,8 +122,13 @@ public class OtherUser {
     }
 
     public static OtherUser createFromBase64(String base64, BulletinBoard board, Database db) throws Exception {
+        // deserialize the base64 string to a key transfer dto
+        byte[] dtoBytes = Base64.getDecoder().decode(base64);
+        KeyTransferDTO dto = ObjectSerializer.deserialize(dtoBytes);
+
+
         ClientApplication application = new ClientApplication(new SecureRandom().generateSeed(32), board);
-        application.receiveBase64(base64);
+        application.receiveKeyTransferDTO(dto);
         OtherUser user = new OtherUser(application, null, new ArrayList<>(), false, -1, db, true, LocalDateTime.now());
         db.addCompleteUser(user);
         return user;
@@ -130,16 +139,18 @@ public class OtherUser {
         boolean shouldUpdate = false;
         try {
 
-            ReceiveData data = null;
+            RawMessage data = null;
             do {
-                data = application.receive();
+                data = application.receiveRawMessage();
                 if (data == null) {
                     break;
                 }
                 if (data.type == MessageType.MESSAGE) {
-                    messages.add(new Message(data.message, LocalDateTime.now().toString(), false));
+                    Message newMessage = Message.fromDTO(data.toMessageDTO());
+                    messages.add(newMessage);
                 } else if (data.type == MessageType.INIT) {
-                    this.application.initalizeSenderPartFromBase64(data.message);
+                    KeyTransferDTO dto = data.toKeyTransferDTO();
+                    this.application.initalizeSenderPartFromDto(dto);
                     this.pending = false;
                     database.updateCompleteUser(this);
                     shouldUpdate = true;
@@ -156,7 +167,7 @@ public class OtherUser {
 
     public void sendMessage(Message message) throws Exception {
         this.messages.add(message);
-        application.send(message.content, MessageType.MESSAGE);
+        this.application.sendRawMessage(RawMessage.fromMessageDTO(message.toDTO()));
     }
 
 

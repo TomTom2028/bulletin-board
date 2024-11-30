@@ -18,6 +18,16 @@ public class Message {
     }
 
     public String toFormattedString(OtherUser user) {
+        // send time first to a real object and then to date and time to seconds
+
         return (sendByMe ? "You" : user.getUsername()) + " (" + sendTime + "): " + content;
+    }
+
+    public MessageDTO toDTO() {
+        return new MessageDTO(content, sendTime);
+    }
+
+    public static Message fromDTO(MessageDTO dto) {
+        return new Message(dto.content, dto.sendTime, false);
     }
 }
