@@ -1,4 +1,5 @@
 import java.io.Serializable;
+import java.time.ZonedDateTime;
 
 /**
 * bulletin-board: MessageDTO
@@ -8,9 +9,9 @@ import java.io.Serializable;
 
 public class MessageDTO implements Serializable {
     public String content;
-    public String sendTime;
+    public ZonedDateTime sendTime;
 
-    public MessageDTO(String content, String sendTime) {
+    public MessageDTO(String content, ZonedDateTime sendTime) {
         this.content = content;
         this.sendTime = sendTime;
     }

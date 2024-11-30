@@ -143,11 +143,11 @@ import java.util.List;
             System.arraycopy(tag, 0, tag2, 0, tag.length);
             int idx2 = idx;
 
-            ClientApplication client = new ClientApplication(seed, key, idx, tag, board);
+            ClientApplication client = new ClientApplication(seed, key, idx, tag, board, null, -1);
 
 
 
-            ClientApplication receiver = new ClientApplication(seed2, key, idx2, tag2, board);
+            ClientApplication receiver = new ClientApplication(seed2, key, idx2, tag2, board, null, -1);
             //receiver.receiveKeyTransferDTO(client.generateBase64());
            /*
             System.out.println("Client: " + client.receive());

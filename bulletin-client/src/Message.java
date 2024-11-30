@@ -1,3 +1,7 @@
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+
 /**
  * bulletin-board: Message
  *
@@ -7,20 +11,33 @@
 
 public class Message {
     public String content;
-    public String sendTime;
+    public ZonedDateTime sendTime;
 
     public boolean sendByMe;
 
-    public Message(String content, String sendTime, boolean sendByMe) {
+    public Message(String content, ZonedDateTime sendTime, boolean sendByMe) {
         this.content = content;
         this.sendTime = sendTime;
         this.sendByMe = sendByMe;
     }
 
     public String toFormattedString(OtherUser user) {
-        // send time first to a real object and then to date and time to seconds
+        System.out.println("sendTime: " + sendTime);
+        System.out.println("sendByMe: " + sendByMe);
+        System.out.println("content: " + content);
+        // send time to date - time
+        ZoneId currentZone = ZoneId.systemDefault();
+        LocalDateTime localSendTime = sendTime.withZoneSameInstant(currentZone).toLocalDateTime();
 
-        return (sendByMe ? "You" : user.getUsername()) + " (" + sendTime + "): " + content;
+        String formattedDay = localSendTime.getDayOfMonth() < 10 ? "0" + localSendTime.getDayOfMonth() : "" + localSendTime.getDayOfMonth();
+        String formattedMonth = localSendTime.getMonthValue() < 10 ? "0" + localSendTime.getMonthValue() : "" + localSendTime.getMonthValue();
+        String formattedHour = localSendTime.getHour() < 10 ? "0" + localSendTime.getHour() : "" + localSendTime.getHour();
+        String formattedMinute = localSendTime.getMinute() < 10 ? "0" + localSendTime.getMinute() : "" + localSendTime.getMinute();
+
+        String localSendTimeStr = String.format("%s/%s/%s %s:%s", formattedDay, formattedMonth, localSendTime.getYear(), formattedHour, formattedMinute);
+
+        String username = user.getUsername() == null ? "Unknown user" : user.getUsername();
+        return ((sendByMe ? "You" : username)  + " (" + localSendTimeStr + "): " + content);
     }
 
     public MessageDTO toDTO() {

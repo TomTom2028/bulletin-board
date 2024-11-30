@@ -134,7 +134,7 @@ public class Database {
                 recieveKey = new SecretKeySpec(recieveKeyBytes, 0, recieveKeyBytes.length, "AES");
             }
 
-            ClientApplication app = new ClientApplication(seed, sendKey, recieveKey, sendIdx, sendTag, recieveIdx, recieveTag, board);
+            ClientApplication app = new ClientApplication(seed, sendKey, recieveKey, sendIdx, sendTag, recieveIdx, recieveTag, board, this, -1);
             user.setApplication(app);
         }
     }
@@ -155,6 +155,38 @@ public class Database {
         statement.setBytes(8, app.getOtherTag());
         statement.setBoolean(9, user.isPending());
         statement.setInt(10, user.getId());
+
+        statement.executeUpdate();
+    }
+
+    public void updateClientApp(ClientApplication app) throws SQLException {
+        if (app.getId() == -1) {
+            return; // silent fail
+        }
+        //use prepared statement
+        //language=SQL
+        String sql = "UPDATE users SET n = ?, tagSize = ?, sendKey = ?, recieveKey = ?, sendIdx = ?, sendTag = ?, recieveIdx = ?, recieveTag = ? WHERE id = ?";
+        PreparedStatement statement = connection.prepareStatement(sql);
+        statement.setInt(1, app.getN());
+        statement.setInt(2,app.getTagSize());
+
+        byte[]sendKeyBytes = null;
+        byte[]recieveKeyBytes = null;
+        if(app.getSharedKey() != null){
+            sendKeyBytes = app.getSharedKey().getEncoded();
+        }
+        if(app.getOtherKey() != null){
+            recieveKeyBytes = app.getOtherKey().getEncoded();
+        }
+
+
+        statement.setBytes(3, sendKeyBytes);
+        statement.setBytes(4, recieveKeyBytes);
+        statement.setInt(5, app.getIdx());
+        statement.setBytes(6, app.getTag());
+        statement.setInt(7, app.getOtherIdx());
+        statement.setBytes(8, app.getOtherTag());
+        statement.setInt(9, app.getId());
 
         statement.executeUpdate();
     }
