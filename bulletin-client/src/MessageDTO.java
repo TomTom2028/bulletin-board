@@ -10,11 +10,9 @@ import java.time.ZonedDateTime;
 public class MessageDTO implements Serializable {
     public String content;
     public ZonedDateTime sendTime;
-    public int id;
 
-    public MessageDTO(String content, ZonedDateTime sendTime, int id) {
+    public MessageDTO(String content, ZonedDateTime sendTime) {
         this.content = content;
         this.sendTime = sendTime;
-        this.id = id;
     }
 }

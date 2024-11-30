@@ -13,12 +13,10 @@ public class RecoveryMessageDTO implements Serializable {
     public ZonedDateTime sendTime;
 
     public boolean sendByMe;
-    public int id;
 
-    public RecoveryMessageDTO(String content, ZonedDateTime sendTime, boolean sendByMe, int id) {
+    public RecoveryMessageDTO(String content, ZonedDateTime sendTime, boolean sendByMe) {
         this.content = content;
         this.sendTime = sendTime;
         this.sendByMe = sendByMe;
-        this.id = id;
     }
 }

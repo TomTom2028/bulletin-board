@@ -44,10 +44,10 @@ public class Message {
     }
 
     public MessageDTO toDTO() {
-        return new MessageDTO(content, sendTime, id);
+        return new MessageDTO(content, sendTime);
     }
 
     public static Message fromDTO(MessageDTO dto) {
-        return new Message(dto.content, dto.sendTime, false, dto.id);
+        return new Message(dto.content, dto.sendTime, false, -1);
     }
 }
