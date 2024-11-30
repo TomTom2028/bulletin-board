@@ -1,17 +1,8 @@
 import javax.swing.*;
 import java.awt.*;
+import java.awt.datatransfer.StringSelection;
+import java.awt.datatransfer.Clipboard;
 import java.util.List;
-
-/**
- * bulletin-board: ContactSelector
- *
- * @author robbe
- * @version 16/11/2024
- */
-
-
-
-
 
 public class ContactSelector extends JPanel {
 
@@ -19,19 +10,18 @@ public class ContactSelector extends JPanel {
     List<OtherUser> contacts;
     ContactSelectedCallback callback;
 
-
     private class ContactPanel extends JPanel {
         public ContactPanel() {
             super();
-            setPreferredSize(new Dimension(200, 20));
+            setPreferredSize(new Dimension(50, 20));
 
             if (contacts.isEmpty()) {
                 setLayout(new GridLayout());
                 JLabel notFound = new JLabel("No contacts found");
                 notFound.setHorizontalAlignment(JLabel.CENTER);
-                add(notFound) ;
+                add(notFound);
             } else {
-                setLayout(new BorderLayout ());
+                setLayout(new BorderLayout());
                 JList<OtherUser> contactList = new JList<>(contacts.toArray(new OtherUser[0]));
                 contactList.addListSelectionListener(e -> {
                     callback.contactSelected(contactList.getSelectedValue());
@@ -42,13 +32,10 @@ public class ContactSelector extends JPanel {
                 scrollPane.add(contactList);
                 add(scrollPane);
             }
-
-
         }
     }
 
     private GridBagConstraints contactsGbc = new GridBagConstraints();
-
 
     public void refreshALl() {
         remove(this.contactPanel);
@@ -58,15 +45,11 @@ public class ContactSelector extends JPanel {
         repaint();
     }
 
-
-
-    public ContactSelector(List<OtherUser> contacts, BulletinBoard board, Database db, ContactSelectedCallback callback)
-    {
+    public ContactSelector(List<OtherUser> contacts, BulletinBoard board, Database db, ContactSelectedCallback callback) {
         super();
         this.callback = callback;
         setBorder(BorderFactory.createLineBorder(Color.BLACK));
         setLayout(new GridBagLayout());
-        // make boxlayout fill all available space
         setBackground(Color.LIGHT_GRAY);
         this.contacts = contacts;
         this.contactPanel = new ContactPanel();
@@ -86,13 +69,10 @@ public class ContactSelector extends JPanel {
                 try {
                     OtherUser user = OtherUser.createFromBase64(userString, board, db);
                     contacts.add(user);
-                    // show success dialog
                     JOptionPane.showMessageDialog(this, "Contact added successfully");
-                    //contacts.add(new OtherUser(null, null, "bob", null, userString));
-                   refreshALl();
+                    refreshALl();
                 } catch (Exception ex) {
                     ex.printStackTrace();
-                    // show error in dialog
                     JOptionPane.showMessageDialog(this, "Error: " + ex.getMessage());
                 }
             }
@@ -111,11 +91,16 @@ public class ContactSelector extends JPanel {
                 OtherUser pendingUser = OtherUser.createPendingRecieverUser(board, db);
                 contacts.add(pendingUser);
                 String base64 = pendingUser.createReciever();
-                //TODO: make this show in a dialog or somehting like that
-                JOptionPane.showMessageDialog(this, "Base64: " + base64);
+
+                // Copy to clipboard
+                StringSelection selection = new StringSelection(base64);
+                Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+                clipboard.setContents(selection, null);
+
+                // Notify user of successful copy
+                JOptionPane.showMessageDialog(this, "Base64 copied to clipboard!");
                 refreshALl();
             } catch (Exception ex) {
-                // show error in dialog
                 JOptionPane.showMessageDialog(this, "Error: " + ex.getMessage());
             }
         });
@@ -126,6 +111,5 @@ public class ContactSelector extends JPanel {
         gbc.gridy = 2;
         gbc.fill = GridBagConstraints.BOTH;
         add(createBase64, gbc);
-
     }
 }

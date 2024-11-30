@@ -1,7 +1,6 @@
 import javax.swing.*;
 import java.awt.*;
 import java.sql.SQLException;
-import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
 import java.util.concurrent.Executors;
@@ -14,11 +13,6 @@ import java.util.concurrent.TimeUnit;
  * @author robbe
  * @version 19/11/2024
  */
-
-
-
-
-
 
 public class MainWindow extends JPanel {
     private OtherUser selectedUser;
@@ -39,8 +33,9 @@ public class MainWindow extends JPanel {
         this.contactSelector = contactSelector;
     }
 
-
     private class InternalMainWindow extends JPanel {
+        private JTextArea messageArea;
+
         public InternalMainWindow() {
             super();
             if (selectedUser == null) {
@@ -72,9 +67,7 @@ public class MainWindow extends JPanel {
                 add(nameLabel, gbc);
 
                 // Middle section: ScrollPane with messages
-
-
-                JTextArea messageArea = new JTextArea(20, 30);
+                messageArea = new JTextArea(20, 30);
                 messageArea.setEditable(false);
                 JScrollPane scrollPane = new JScrollPane(messageArea);
                 gbc.gridx = 0;
@@ -84,12 +77,11 @@ public class MainWindow extends JPanel {
                 gbc.weightx = 1.0;
                 gbc.weighty = 1.0;
                 add(scrollPane, gbc);
+
                 if (isPending) {
                     messageArea.setText("This user is pending");
                 } else {
-                    for (Message message : selectedUser.getMessages()) {
-                        messageArea.append(message.toFormattedString(selectedUser) + "\n");
-                    }
+                    refreshMessageArea();
                 }
 
                 // Bottom section: TextField and Send button
@@ -114,7 +106,7 @@ public class MainWindow extends JPanel {
                 gbc.weightx = 0.2;
                 add(sendButton, gbc);
 
-
+                // Edit Name functionality
                 editNameButton.addActionListener(e -> {
                     String newName = JOptionPane.showInputDialog("Enter new name");
                     if (newName != null) {
@@ -129,55 +121,69 @@ public class MainWindow extends JPanel {
                             if (contactSelector != null) {
                                 contactSelector.refreshALl();
                             }
+                            refreshMessageArea(); // Refresh the messages with the updated name
                         } catch (SQLException throwables) {
-                            // show error dialog
+                            // Show error dialog
                             JOptionPane.showMessageDialog(this, "Error: " + throwables.getMessage());
                             throwables.printStackTrace();
                         }
                     }
                 });
 
-                sendButton.addActionListener(e -> {
+                // Shared send logic
+                Runnable sendMessageAction = () -> {
                     String messageText = messageField.getText().trim();
                     if (!messageText.isEmpty()) {
                         try {
-                            Message newMessage = new Message(messageText, ZonedDateTime.now(), true );
+                            Message newMessage = new Message(messageText, ZonedDateTime.now(), true);
                             selectedUser.sendMessage(newMessage);
                             messageField.setText("");
                             messageArea.append(newMessage.toFormattedString(selectedUser) + "\n");
                         } catch (Exception ex) {
-                            // show error dialog
+                            // Show error dialog
                             JOptionPane.showMessageDialog(this, "Error: " + ex.getMessage());
                             ex.printStackTrace();
                         }
                     }
-                });
+                };
 
+                // Add ActionListener to sendButton
+                sendButton.addActionListener(e -> sendMessageAction.run());
 
-                // task to periodically update the messages
+                // Add ActionListener to messageField for Enter key
+                messageField.addActionListener(e -> sendMessageAction.run());
+
+                // Task to periodically update the messages
                 if (selectedUser.getApplication().canReceive()) {
                     executorService = Executors.newScheduledThreadPool(1);
                     executorService.scheduleAtFixedRate(() -> {
                         int prevMessageCount = selectedUser.getMessages().size();
                         if (selectedUser.updateMessages()) {
                             messageArea.setText("");
-                            refresh(selectedUser);
+                            refreshMessageArea();
                         } else {
                             if (selectedUser.getMessages().size() > prevMessageCount) {
-                                Iterable<Message> newMessages = selectedUser.getMessages().subList(prevMessageCount, selectedUser.getMessages().size());
+                                Iterable<Message> newMessages = selectedUser.getMessages().subList(prevMessageCount,
+                                        selectedUser.getMessages().size());
                                 for (Message message : newMessages) {
                                     messageArea.append(message.toFormattedString(selectedUser) + "\n");
                                 }
                             }
-
                         }
                     }, 0, 4, TimeUnit.SECONDS);
                 }
-
             }
         }
-    }
 
+        private void refreshMessageArea() {
+            SwingUtilities.invokeLater(() -> {
+                messageArea.setText(""); // Clear the message area
+                for (Message message : selectedUser.getMessages()) {
+                    messageArea.append(message.toFormattedString(selectedUser) + "\n"); // Re-render each message
+                }
+            });
+        }
+    }
 
     public void refresh(OtherUser selectedUser) {
         if (executorService != null) {
@@ -190,6 +196,4 @@ public class MainWindow extends JPanel {
         revalidate();
         repaint();
     }
-
-
 }
