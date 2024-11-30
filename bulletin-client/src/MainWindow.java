@@ -113,28 +113,29 @@ public class MainWindow extends JPanel {
                 gbc.weightx = 0.2;
                 add(sendButton, gbc);
 
-
-                editNameButton.addActionListener(e -> {
-                    String newName = JOptionPane.showInputDialog("Enter new name");
-                    if (newName != null) {
-                        newName = newName.trim();
-                        if (newName.length() < 2) {
-                            JOptionPane.showMessageDialog(this, "Name must be at least 2 characters long");
-                            return;
-                        }
+                // Shared send logic
+                Runnable sendMessageAction = () -> {
+                    String messageText = messageField.getText().trim();
+                    if (!messageText.isEmpty()) {
                         try {
-                            selectedUser.setUsername(newName);
-                            nameLabel.setText(newName);
-                            if (contactSelector != null) {
-                                contactSelector.refreshALl();
-                            }
-                        } catch (SQLException throwables) {
-                            // show error dialog
-                            JOptionPane.showMessageDialog(this, "Error: " + throwables.getMessage());
-                            throwables.printStackTrace();
+                            Message newMessage = new Message(messageText, LocalDateTime.now().toString(), true);
+                            selectedUser.sendMessage(newMessage);
+                            messageField.setText("");
+                            messageArea.append(newMessage.toFormattedString(selectedUser) + "\n");
+                        } catch (Exception ex) {
+                            // Show error dialog
+                            JOptionPane.showMessageDialog(this, "Error: " + ex.getMessage());
+                            ex.printStackTrace();
                         }
                     }
-                });
+                };
+
+                // Add ActionListener to sendButton
+                sendButton.addActionListener(e -> sendMessageAction.run());
+
+                // Add ActionListener to messageField for Enter key
+                messageField.addActionListener(e -> sendMessageAction.run());
+
 
                 sendButton.addActionListener(e -> {
                     String messageText = messageField.getText().trim();

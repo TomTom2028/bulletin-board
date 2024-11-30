@@ -58,25 +58,16 @@ import java.util.List;
         frame.setLayout(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets = new Insets(5, 5, 5, 5);
-        gbc.anchor = GridBagConstraints.EAST; // Ensure proper alignment
 
-        // Add ContactSelector
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        gbc.weightx = 0.2; // Reset gridwidth
-        gbc.weighty = 1;
-
-
-        gbc.anchor = GridBagConstraints.CENTER; // Ensure proper alignment
-        gbc.fill = GridBagConstraints.BOTH;
+        // Create and populate the list of contacts
         List<OtherUser> contacts = new ArrayList<>();
-
         try {
             contacts.addAll(database.getOtherUsers());
         } catch (SQLException e) {
             e.printStackTrace();
         }
 
+        // Create the main components
         MainWindow mainWindow = new MainWindow(selectedContact);
         ContactSelector contactSelector = new ContactSelector(contacts, board, database, new ContactSelectedCallback() {
             @Override
@@ -85,31 +76,39 @@ import java.util.List;
                 try {
                     selectedContact.initialise(board);
                 } catch (RemoteException | SQLException e) {
-                    // show error in dialog
+                    // Show error in dialog
                     JOptionPane.showMessageDialog(frame, "Error: " + e.getMessage());
                     e.printStackTrace();
-
                 }
                 System.out.println("Selected user: " + user);
                 mainWindow.refresh(selectedContact);
-
             }
         });
-        frame.add(contactSelector, gbc);
         mainWindow.setContactSelector(contactSelector);
 
-        // Add Label
-        gbc.gridx = 1;
+        // Add ContactSelector to the layout
+        gbc.gridx = 0; // First column
         gbc.gridy = 0;
-        gbc.weightx = 0.8; // Expand width
-        gbc.weighty = 1;
+        gbc.weightx = 0.2; // 20% width
+        gbc.weighty = 1.0; // Full height
+        gbc.fill = GridBagConstraints.BOTH; // Fill both horizontally and vertically
+        frame.add(contactSelector, gbc);
 
+        // Add MainWindow to the layout
+        gbc.gridx = 1; // Second column
+        gbc.gridy = 0;
+        gbc.weightx = 0.8; // 80% width
+        gbc.weighty = 1.0; // Full height
+        gbc.fill = GridBagConstraints.BOTH; // Fill both horizontally and vertically
         frame.add(mainWindow, gbc);
 
-        frame.pack();
-        frame.setSize(400, 400);
+        // Fix resizing behavior
+        frame.setMinimumSize(new Dimension(400, 400)); // Optional: Set minimum size
+        frame.setSize(800, 600); // Set initial size for better visibility
         frame.setVisible(true);
     }
+
+
 
 
 
