@@ -15,11 +15,12 @@ import java.util.List;
 */public class ClientMain {
 
     public static void main(String[] args) throws Exception {
-        ClientMain first = createNewApplication("client.db", "Client 1");
-        ClientMain second = createNewApplication("client2.db", "Client 2");
-
-        first.run();
-        second.run();
+//        ClientMain first = createNewApplication("client.db", "Client 1");
+//        ClientMain second = createNewApplication("client2.db", "Client 2");
+//
+//        first.run();
+//        second.run();
+        testFn();
     }
 
 
@@ -151,11 +152,26 @@ import java.util.List;
            /*
             System.out.println("Client: " + client.receive());
             client.send("Hello world!", MessageType.MESSAGE);
+            client.send("Hello world!2", MessageType.MESSAGE);
+            client.send("Hello world!3", MessageType.MESSAGE);
+            client.send("Hello world!4", MessageType.MESSAGE);
+            client.send("Hello world!5", MessageType.MESSAGE);
+            client.send("Hello world!6", MessageType.MESSAGE);
+
+            //System.out.println("Receiver2: " + receiver2.receive());
+
 
             System.out.println("Receiver: " + receiver.receive());
             System.out.println("Receiver: " + receiver.receive());
+            System.out.println("Receiver: " + receiver.receive());
+            System.out.println("Receiver: " + receiver.receive());
+            System.out.println("Receiver: " + receiver.receive());
+            System.out.println("Receiver: " + receiver.receive());
+
             client.send("a fox can walk!", MessageType.MESSAGE);
             System.out.println("Receiver: " + receiver.receive());
+            System.out.println("Receiver: " + receiver.receive());
+
 
             receiver.send("a receiver can also send messages", MessageType.MESSAGE);
             System.out.println("Client: " + client.receive());*/
