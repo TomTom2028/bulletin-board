@@ -160,14 +160,28 @@ public class Database {
     }
 
     public void updateClientApp(ClientApplication app) throws SQLException {
+        if (app.getId() == -1) {
+            return; // silent fail
+        }
         //use prepared statement
         //language=SQL
         String sql = "UPDATE users SET n = ?, tagSize = ?, sendKey = ?, recieveKey = ?, sendIdx = ?, sendTag = ?, recieveIdx = ?, recieveTag = ? WHERE id = ?";
         PreparedStatement statement = connection.prepareStatement(sql);
         statement.setInt(1, app.getN());
         statement.setInt(2,app.getTagSize());
-        statement.setBytes(3, app.getSharedKey().getEncoded());
-        statement.setBytes(4, app.getOtherKey().getEncoded());
+
+        byte[]sendKeyBytes = null;
+        byte[]recieveKeyBytes = null;
+        if(app.getSharedKey() != null){
+            sendKeyBytes = app.getSharedKey().getEncoded();
+        }
+        if(app.getOtherKey() != null){
+            recieveKeyBytes = app.getOtherKey().getEncoded();
+        }
+
+
+        statement.setBytes(3, sendKeyBytes);
+        statement.setBytes(4, recieveKeyBytes);
         statement.setInt(5, app.getIdx());
         statement.setBytes(6, app.getTag());
         statement.setInt(7, app.getOtherIdx());

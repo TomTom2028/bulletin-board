@@ -101,6 +101,7 @@ public class ContactSelector extends JPanel {
                 JOptionPane.showMessageDialog(this, "Base64 copied to clipboard!");
                 refreshALl();
             } catch (Exception ex) {
+                ex.printStackTrace();
                 JOptionPane.showMessageDialog(this, "Error: " + ex.getMessage());
             }
         });

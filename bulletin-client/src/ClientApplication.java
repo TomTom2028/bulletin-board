@@ -63,6 +63,7 @@ public class ClientApplication {
         this.board = board;
         this.database = db;
         this.id = id;
+
     }
 
 
