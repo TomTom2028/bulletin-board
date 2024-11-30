@@ -112,5 +112,29 @@ public class ContactSelector extends JPanel {
         gbc.gridy = 2;
         gbc.fill = GridBagConstraints.BOTH;
         add(createBase64, gbc);
+
+        JButton removeContact = new JButton("Remove contact(TODO)");
+        removeContact.addActionListener(e -> {
+            JOptionPane.showMessageDialog(this, "Not implemented yet");
+        });
+        gbc = new GridBagConstraints();
+        gbc.weightx = 1;
+        gbc.weighty = 0.1;
+        gbc.gridx = 0;
+        gbc.gridy = 3;
+        gbc.fill = GridBagConstraints.BOTH;
+        add(removeContact, gbc);
+
+        JButton createRecoveryKey = new JButton("Create recovery key for other (TODO)");
+        createRecoveryKey.addActionListener(e -> {
+            JOptionPane.showMessageDialog(this, "Not implemented yet");
+        });
+        gbc = new GridBagConstraints();
+        gbc.weightx = 1;
+        gbc.weighty = 0.1;
+        gbc.gridx = 0;
+        gbc.gridy = 4;
+        gbc.fill = GridBagConstraints.BOTH;
+        add(createRecoveryKey, gbc);
     }
 }

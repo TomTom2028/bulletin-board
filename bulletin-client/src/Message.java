@@ -28,9 +28,6 @@ public class Message {
     }
 
     public String toFormattedString(OtherUser user) {
-        System.out.println("sendTime: " + sendTime);
-        System.out.println("sendByMe: " + sendByMe);
-        System.out.println("content: " + content);
         // send time to date - time
         ZoneId currentZone = ZoneId.systemDefault();
         LocalDateTime localSendTime = sendTime.withZoneSameInstant(currentZone).toLocalDateTime();
