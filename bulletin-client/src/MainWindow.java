@@ -135,7 +135,7 @@ public class MainWindow extends JPanel {
                     String messageText = messageField.getText().trim();
                     if (!messageText.isEmpty()) {
                         try {
-                            Message newMessage = new Message(messageText, ZonedDateTime.now(), true);
+                            Message newMessage = new Message(messageText, ZonedDateTime.now(), true,  -1);
                             selectedUser.sendMessage(newMessage);
                             messageField.setText("");
                             messageArea.append(newMessage.toFormattedString(selectedUser) + "\n");

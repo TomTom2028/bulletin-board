@@ -23,7 +23,6 @@ public class OtherUser {
 
     private Database database;
     private LocalDateTime addedAt;
-    private LocalDateTime lastMessageAt; // TODO: implement!
 
     private boolean initialized = false; //when not initalized only name, id and pending!
 
@@ -159,6 +158,7 @@ public class OtherUser {
                 }
                 if (data.type == MessageType.MESSAGE) {
                     Message newMessage = Message.fromDTO(data.toMessageDTO());
+                    database.addMessage(this, newMessage);
                     messages.add(newMessage);
                 } else if (data.type == MessageType.INIT) {
                     KeyTransferDTO dto = data.toKeyTransferDTO();
@@ -179,8 +179,11 @@ public class OtherUser {
 
     public void sendMessage(Message message) throws Exception {
         this.messages.add(message);
+        database.addMessage(this, message);
         this.application.sendRawMessage(RawMessage.fromMessageDTO(message.toDTO()));
     }
 
-
+    public void setMessages(List<Message> messages) {
+        this.messages = messages;
+    }
 }

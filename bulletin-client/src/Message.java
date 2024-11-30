@@ -14,11 +14,17 @@ public class Message {
     public ZonedDateTime sendTime;
 
     public boolean sendByMe;
+    public int id;
 
-    public Message(String content, ZonedDateTime sendTime, boolean sendByMe) {
+    public Message(String content, ZonedDateTime sendTime, boolean sendByMe, int id) {
         this.content = content;
         this.sendTime = sendTime;
         this.sendByMe = sendByMe;
+        this.id = id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
     }
 
     public String toFormattedString(OtherUser user) {
@@ -41,10 +47,10 @@ public class Message {
     }
 
     public MessageDTO toDTO() {
-        return new MessageDTO(content, sendTime);
+        return new MessageDTO(content, sendTime, id);
     }
 
     public static Message fromDTO(MessageDTO dto) {
-        return new Message(dto.content, dto.sendTime, false);
+        return new Message(dto.content, dto.sendTime, false, dto.id);
     }
 }

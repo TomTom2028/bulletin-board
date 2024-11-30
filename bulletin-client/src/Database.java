@@ -4,6 +4,8 @@ import java.security.Key;
 import java.security.SecureRandom;
 import java.sql.*;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -33,7 +35,24 @@ public class Database {
                 "recieveTag BLOB, " +
                 "pending BOOLEAN," +
                 "added_at TIMESTAMP NOT NULL);");
-
+        //language=SQL
+        runStatement("""
+                create table if not exists messages
+                (
+                    id            integer   not null
+                        constraint id_fk
+                            primary key autoincrement,
+                    content       TEXT      not null,
+                    sendByMe      BOOLEAN   not null,
+                    sendAt        TIMESTAMP not null,
+                    other_user_id integer   not null,
+                    CONSTRAINT other_user_fk
+                        FOREIGN KEY (other_user_id)
+                            REFERENCES users (id)
+                            ON DELETE CASCADE
+                            ON UPDATE CASCADE
+                );
+                """);
     }
 
 
@@ -134,6 +153,10 @@ public class Database {
                 recieveKey = new SecretKeySpec(recieveKeyBytes, 0, recieveKeyBytes.length, "AES");
             }
 
+
+            List<Message> messages = getMessages(user);
+            user.setMessages(messages);
+
             ClientApplication app = new ClientApplication(seed, sendKey, recieveKey, sendIdx, sendTag, recieveIdx, recieveTag, board, this, -1);
             user.setApplication(app);
         }
@@ -189,6 +212,37 @@ public class Database {
         statement.setInt(9, app.getId());
 
         statement.executeUpdate();
+    }
+
+    public void addMessage(OtherUser user, Message message) throws SQLException {
+        //use prepared statement
+        //language=SQL
+        String sql = "INSERT INTO messages (content, sendByMe, sendAt, other_user_id) VALUES (?, ?, ?, ?)";
+        PreparedStatement statement = connection.prepareStatement(sql);
+        statement.setString(1, message.content);
+        statement.setBoolean(2, message.sendByMe);
+        statement.setTimestamp(3, Timestamp.valueOf(message.sendTime.toLocalDateTime()));
+        statement.setInt(4, user.getId());
+
+        statement.executeUpdate();
+        message.setId(statement.getGeneratedKeys().getInt(1));
+    }
+
+    public List<Message> getMessages(OtherUser user) throws SQLException {
+        //language=SQL
+        String sql = "SELECT id, content, sendByMe, sendAt FROM messages WHERE other_user_id = ? ORDER BY sendAt ASC";
+        PreparedStatement statement = connection.prepareStatement(sql);
+        statement.setInt(1, user.getId());
+        ResultSet rs = statement.executeQuery();
+        List<Message> messages = new ArrayList<>();
+        while (rs.next()) {
+            int id = rs.getInt("id");
+            String content = rs.getString("content");
+            boolean sendByMe = rs.getBoolean("sendByMe");
+            LocalDateTime sendAt = rs.getTimestamp("sendAt").toLocalDateTime();
+            messages.add(new Message(content, ZonedDateTime.of(sendAt, ZoneId.systemDefault()), sendByMe, id));
+        }
+        return messages;
     }
 
 }
