@@ -3,6 +3,7 @@ import java.awt.*;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -140,7 +141,7 @@ public class MainWindow extends JPanel {
                     String messageText = messageField.getText().trim();
                     if (!messageText.isEmpty()) {
                         try {
-                            Message newMessage = new Message(messageText, LocalDateTime.now().toString(), true );
+                            Message newMessage = new Message(messageText, ZonedDateTime.now(), true );
                             selectedUser.sendMessage(newMessage);
                             messageField.setText("");
                             messageArea.append(newMessage.toFormattedString(selectedUser) + "\n");
