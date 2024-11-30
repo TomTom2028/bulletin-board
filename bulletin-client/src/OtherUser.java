@@ -18,7 +18,6 @@ public class OtherUser {
     private ClientApplication application;
     private String username;
     private List<Message> messages;
-    private int id;
 
     private boolean pending;
 
@@ -28,8 +27,9 @@ public class OtherUser {
 
     private boolean initialized = false; //when not initalized only name, id and pending!
 
+    private int backupId;
+
     public OtherUser(ClientApplication application, String username, List<Message> messages, boolean pending, int id, Database database, boolean initialized, LocalDateTime addedAt) {
-        this.id = id;
         this.application = application;
         this.username = username;
         this.messages = messages;
@@ -37,6 +37,10 @@ public class OtherUser {
         this.database = database;
         this.initialized = initialized;
         this.addedAt = addedAt;
+        this.backupId = id;
+        if (application != null) {
+            application.setId(id);
+        }
     }
 
     @Override
@@ -56,7 +60,7 @@ public class OtherUser {
     }
 
     public static OtherUser createPendingRecieverUser(BulletinBoard board, Database db) throws NoSuchAlgorithmException, RemoteException, SQLException {
-        ClientApplication application = new ClientApplication(new SecureRandom().generateSeed(32), board);
+        ClientApplication application = new ClientApplication(new SecureRandom().generateSeed(32), board, db, -1);
 
         OtherUser user = new OtherUser(application, null, new ArrayList<>(), true, -1, db, true, LocalDateTime.now());
         return user;
@@ -76,7 +80,11 @@ public class OtherUser {
     }
 
     public int getId() {
-        return id;
+        if (application != null) {
+            return application.getId();
+        } else {
+            return backupId;
+        }
     }
 
     public boolean isPending() {
@@ -84,7 +92,10 @@ public class OtherUser {
     }
 
     public void setId(int id) {
-        this.id = id;
+        backupId = id;
+        if (application != null) {
+            application.setId(id);
+        }
     }
 
     public void setUsername(String username) throws SQLException {
@@ -119,6 +130,7 @@ public class OtherUser {
 
     public void setApplication(ClientApplication application) {
         this.application = application;
+        application.setId(backupId);
     }
 
     public static OtherUser createFromBase64(String base64, BulletinBoard board, Database db) throws Exception {
@@ -127,7 +139,7 @@ public class OtherUser {
         KeyTransferDTO dto = ObjectSerializer.deserialize(dtoBytes);
 
 
-        ClientApplication application = new ClientApplication(new SecureRandom().generateSeed(32), board);
+        ClientApplication application = new ClientApplication(new SecureRandom().generateSeed(32), board, db, -1);
         application.receiveKeyTransferDTO(dto);
         OtherUser user = new OtherUser(application, null, new ArrayList<>(), false, -1, db, true, LocalDateTime.now());
         db.addCompleteUser(user);

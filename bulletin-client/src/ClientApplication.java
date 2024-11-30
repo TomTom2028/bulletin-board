@@ -31,8 +31,13 @@ public class ClientApplication {
 
     private BulletinBoard board;
 
+    private Database database;
+
+    private int id;
+
+
     // contains everything!
-    public ClientApplication(byte[] seed, Key sharedKey, Key otherKey, int idx, byte[] tag, int otherIdx, byte[] otherTag, BulletinBoard board) throws RemoteException {
+    public ClientApplication(byte[] seed, Key sharedKey, Key otherKey, int idx, byte[] tag, int otherIdx, byte[] otherTag, BulletinBoard board, Database db, int id) throws RemoteException {
         this.random = new SecureRandom(seed);
         ConnectionParams params = board.getConnectionParams();
         this.n = params.n;
@@ -44,20 +49,24 @@ public class ClientApplication {
         this.otherIdx = otherIdx;
         this.otherTag = otherTag;
         this.board = board;
+        this.database = db;
+        this.id = id;
 
     }
 
-    public ClientApplication(byte[] seed, BulletinBoard board) throws RemoteException {
+    public ClientApplication(byte[] seed, BulletinBoard board, Database db, int id) throws RemoteException {
         // most things are not initialized yet
         this.random = new SecureRandom(seed);
         ConnectionParams params = board.getConnectionParams();
         this.n = params.n;
         this.tagSize = params.tagSize;
         this.board = board;
+        this.database = db;
+        this.id = id;
     }
 
 
-    public ClientApplication(byte[] seed, Key intialKey, int initialIdx, byte[] initialTag, BulletinBoard board) throws RemoteException {
+    public ClientApplication(byte[] seed, Key intialKey, int initialIdx, byte[] initialTag, BulletinBoard board, Database db, int id) throws RemoteException {
         this.random = new SecureRandom(seed);
         ConnectionParams params = board.getConnectionParams();
         this.n = params.n;
@@ -66,16 +75,16 @@ public class ClientApplication {
         this.idx = initialIdx;
         this.tag = initialTag;
         this.board = board;
+        this.database = db;
+        this.id = id;
     }
 
-    public ClientApplication(byte[] seed, Key intialKey, int initialIdx, byte[] initialTag, int n, int tagSize) throws RemoteException {
-        this.random = new SecureRandom(seed);
-        this.n = n;
-        this.tagSize = tagSize;
-        this.sharedKey = intialKey;
-        this.idx = initialIdx;
-        this.tag = initialTag;
-        this.board = board;
+    public void setId(int id) {
+        this.id = id;
+    }
+
+    public int getId() {
+        return id;
     }
 
     // generate a base64 so another client can initiate a connection
@@ -95,6 +104,7 @@ public class ClientApplication {
         // generate tag
         otherTag = new byte[tagSize];
         random.nextBytes(otherTag);
+        database.updateClientApp(this);
         return new KeyTransferDTO(((SecretKeySpec) otherKey).getEncoded(), otherIdx, otherTag);
     }
 
@@ -157,6 +167,14 @@ public class ClientApplication {
         this.sharedKey = new SecretKeySpec(keyBytes, 0, keyBytes.length, "AES");
         this.idx = idx;
         this.tag = tag;
+
+        if (database != null) {
+            try {
+                database.updateClientApp(this);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
     }
 
 
@@ -213,6 +231,8 @@ public class ClientApplication {
         this.idx = idxNext;
         this.tag = tagNext;
         rotateKey();
+
+        database.updateClientApp(this);
     }
 
 
@@ -266,6 +286,8 @@ public class ClientApplication {
         this.otherTag = tag;
         // TODO: probable issue rotate other guys key not ours
         rotateOtherKey();
+
+        database.updateClientApp(this);
 
         return data;
     }
