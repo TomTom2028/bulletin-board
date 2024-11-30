@@ -15,12 +15,12 @@ import java.util.List;
 */public class ClientMain {
 
     public static void main(String[] args) throws Exception {
-//        ClientMain first = createNewApplication("client.db", "Client 1");
-//        ClientMain second = createNewApplication("client2.db", "Client 2");
+        ClientMain first = createNewApplication("client.db", "Client 1");
+        ClientMain second = createNewApplication("client2.db", "Client 2");
 //
-//        first.run();
-//        second.run();
-        testFn();
+        first.run();
+        second.run();
+        //testFn();
     }
 
 

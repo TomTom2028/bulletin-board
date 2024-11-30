@@ -92,13 +92,24 @@ public class ClientApplication {
     // generate a base64 so another client can initiate a connection
     // this contains the initial key, the initial idx and the initial tag
     public KeyTransferDTO generateKeyTransferDTOForOtherParty() throws Exception {
-        // make the otherkey, otheridx and othertag
-        // send the otherkey, otheridx and othertag to the other client
-
         // Generate a new AES key for the other client
         KeyGenerator keyGen = KeyGenerator.getInstance("AES");
         keyGen.init(256);
         otherKey = keyGen.generateKey();
+
+        // Query the current board size dynamically
+//        ConnectionParams params = board.getConnectionParams();
+//        this.oldN = this.n;
+//        this.n = params.n;
+//
+//        // Generate a new index for the other client considering resizing
+//        if (params.resizing && params.resizingUp) {
+//            otherIdx = random.nextInt(this.oldN);
+//        } else {
+//            otherIdx = random.nextInt(this.n);
+//        }
+        ConnectionParams params = board.getConnectionParams();
+        int currentN = params.n;
 
         // Generate a new index for the other client
         otherIdx = random.nextInt(currentN);
@@ -106,9 +117,13 @@ public class ClientApplication {
         // Generate a new tag for the other client
         otherTag = new byte[tagSize];
         random.nextBytes(otherTag);
+
+        // Update the application state in the database
         database.updateClientApp(this);
+
         return new KeyTransferDTO(((SecretKeySpec) otherKey).getEncoded(), otherIdx, otherTag);
     }
+
 
 
     // what to do upon receiving a base64 from another client
@@ -116,7 +131,6 @@ public class ClientApplication {
     // we then generate a key, idx and tag for the other user
     // we then send a message to the other user containing this info
     public void receiveKeyTransferDTO(KeyTransferDTO dto) {
-
         byte[] keyBytes = dto.key;
         int idx = dto.idx;
         byte[] tag = dto.tag;
@@ -124,42 +138,37 @@ public class ClientApplication {
         this.sharedKey = new SecretKeySpec(keyBytes, 0, keyBytes.length, "AES");
         this.idx = idx;
         this.tag = tag;
+
         try {
-            // Decode the Base64 input
-            String[] parts = base64.split(" ");
-            byte[] keyBytes = Base64.getDecoder().decode(parts[0]);
-            int idx = Integer.parseInt(parts[1]);
-            byte[] tag = Base64.getDecoder().decode(parts[2]);
-
-            // Set the shared key, index, and tag
-            this.sharedKey = new SecretKeySpec(keyBytes, 0, keyBytes.length, "AES");
-            this.idx = idx;
-            System.out.println("Received idx: " + idx);
-            this.tag = tag;
-
             // Query the current board size dynamically
             ConnectionParams params = board.getConnectionParams();
-            int currentN = params.n;
+            this.oldN = this.n;
+            this.n = params.n;
 
             // Generate a new AES key for the other client
             KeyGenerator keyGen = KeyGenerator.getInstance("AES");
             keyGen.init(256);
             otherKey = keyGen.generateKey();
 
-            // Generate a new index for the other client
-            otherIdx = random.nextInt(currentN);
+            // Generate a new index for the other client considering resizing
+            if (params.resizing && params.resizingUp) {
+                otherIdx = random.nextInt(this.oldN);
+            } else {
+                otherIdx = random.nextInt(this.n);
+            }
 
             // Generate a new tag for the other client
             otherTag = new byte[tagSize];
             random.nextBytes(otherTag);
 
-            // generate key transfer dto and send it
+            // Generate key transfer DTO and send it
             KeyTransferDTO keyTransferDTO = new KeyTransferDTO(((SecretKeySpec) otherKey).getEncoded(), otherIdx, otherTag);
             sendRawMessage(RawMessage.fromKeyTransferDTO(keyTransferDTO));
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
+
 
 
     public void sendRawMessage(RawMessage message) throws Exception {
@@ -255,7 +264,17 @@ public class ClientApplication {
     }
 
     public void sendBytes(byte[] data) throws Exception {
-        int idxNext = random.nextInt(n);
+        int idxNext = 0;
+        ConnectionParams params = board.getConnectionParams();
+        this.oldN = this.n;
+        this.n = params.n;
+        if(params.resizing && params.resizingUp) {
+            idxNext = random.nextInt(this.oldN);
+        }
+        else {
+            idxNext = random.nextInt(this.n);
+        }
+        //int idxNext = random.nextInt(n);
         byte[] tagNext = generateTag();
         //BoardContent content = new BoardContent(data, idxNext, tagNext, type);
         Cipher cipher = Cipher.getInstance("AES");

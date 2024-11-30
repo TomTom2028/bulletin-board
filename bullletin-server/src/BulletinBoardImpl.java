@@ -77,8 +77,8 @@ public class BulletinBoardImpl extends UnicastRemoteObject implements BulletinBo
 
 
     @Override
-    public void write(int idx, byte[] data, byte[] tagHash) throws RemoteException {
-        if (idx >= N || idx < 0) {
+    public synchronized void write(int idx, byte[] data, byte[] tagHash) throws RemoteException {
+        if (idx < 0) {
             return;
         }
 
@@ -113,6 +113,9 @@ public class BulletinBoardImpl extends UnicastRemoteObject implements BulletinBo
             if (value == null && transitionBoard != null && idx < transitionBoard.length) {
                 System.out.println("Checking transition board.");
                 value = transitionBoard[idx].datasets.remove(cellKey);
+            }
+            if (value == null) {
+                System.out.println("No value found.");
             }
 
             if (value != null) {
@@ -157,7 +160,7 @@ public class BulletinBoardImpl extends UnicastRemoteObject implements BulletinBo
         }
     }
 
-    private void startResize(int newSize) {
+    private synchronized void startResize(int newSize) {
         System.out.println("Resizing board to size: " + newSize);
         transitionBoard = new BoardCell[newSize];
         for (int i = 0; i < newSize; i++) {
