@@ -109,6 +109,8 @@ public class OtherUser {
                 initialized = true;
             } catch (SQLException e) {
                 e.printStackTrace();
+            } catch (Exception e) {
+                throw new RuntimeException(e);
             }
         }
     }
@@ -152,7 +154,7 @@ public class OtherUser {
 
             RawMessage data = null;
             do {
-                data = application.receiveRawMessage();
+                data = application.receiveRawMessage(database.getHash(this), pending);
                 if (data == null) {
                     break;
                 }
@@ -178,9 +180,13 @@ public class OtherUser {
     }
 
     public void sendMessage(Message message) throws Exception {
+
+        // before sending message, check if the user is corrupted
+        String databaseHash = database.getHash(this);
+
         this.messages.add(message);
         database.addMessage(this, message);
-        this.application.sendRawMessage(RawMessage.fromMessageDTO(message.toDTO()));
+        this.application.sendRawMessage(RawMessage.fromMessageDTO(message.toDTO()), databaseHash, pending);
     }
 
     public void setMessages(List<Message> messages) {

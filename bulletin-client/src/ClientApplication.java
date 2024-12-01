@@ -1,9 +1,11 @@
 import javax.crypto.Cipher;
 import javax.crypto.KeyGenerator;
 import javax.crypto.spec.SecretKeySpec;
+import java.nio.ByteBuffer;
 import java.rmi.RemoteException;
 import java.security.Key;
 import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.util.Base64;
 
@@ -34,6 +36,8 @@ public class ClientApplication {
     private Database database;
 
     private int id;
+
+    private boolean isCorrupted = false;
 
 
     // contains everything!
@@ -88,6 +92,37 @@ public class ClientApplication {
         return id;
     }
 
+    // get hash returns a hash made from sharedKey, idx, tag, otherKey, otherIdx, otherTag
+    private String getHash() {
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+
+            // Add idx as 4 bytes
+            digest.update(ByteBuffer.allocate(4).putInt(idx).array());
+
+            // Add tag bytes if not null
+            if (tag != null) digest.update(tag);
+
+            // Add shared key bytes if not null
+            if (sharedKey != null) digest.update(sharedKey.getEncoded());
+
+            // Add other key bytes if not null
+            if (otherKey != null) digest.update(otherKey.getEncoded());
+
+            // Add otherIdx as 4 bytes
+            digest.update(ByteBuffer.allocate(4).putInt(otherIdx).array());
+
+            // Add otherTag bytes if not null
+            if (otherTag != null) digest.update(otherTag);
+
+            // Return the Base64-encoded hash
+            return Base64.getEncoder().encodeToString(digest.digest());
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException("Failed to compute hash", e);
+        }
+    }
+
+
     // generate a base64 so another client can initiate a connection
     // this contains the initial key, the initial idx and the initial tag
     public KeyTransferDTO generateKeyTransferDTOForOtherParty() throws Exception {
@@ -139,20 +174,20 @@ public class ClientApplication {
 
             // generate key transfer dto and send it
             KeyTransferDTO keyTransferDTO = new KeyTransferDTO(((SecretKeySpec) otherKey).getEncoded(), otherIdx, otherTag);
-            sendRawMessage(RawMessage.fromKeyTransferDTO(keyTransferDTO));
+            sendRawMessage(RawMessage.fromKeyTransferDTO(keyTransferDTO), null, true);
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
 
-    public void sendRawMessage(RawMessage message) throws Exception {
+    public void sendRawMessage(RawMessage message, String databaseHash, boolean pending) throws Exception {
         byte[] data = message.toByteArray();
-        sendBytes(data);
+        sendBytes(data, databaseHash, pending);
     }
 
-    public RawMessage receiveRawMessage() throws Exception {
-        byte[] data = receiveBytes();
+    public RawMessage receiveRawMessage(String databaseHash, boolean pending) throws Exception {
+        byte[] data = receiveBytes(databaseHash, pending);
         if (data == null) {
             return null;
         }
@@ -208,7 +243,17 @@ public class ClientApplication {
                 (byte)value};
     }
 
-    public void sendBytes(byte[] data) throws Exception {
+    public void sendBytes(byte[] data, String databaseHash, boolean pending) throws Exception {
+
+        // get hash
+        String hash = getHash();
+        if(!hash.equals(databaseHash) && databaseHash != null) {
+            //System.out.println("user is corrupted");
+            isCorrupted = true;
+            System.out.println("failed hash check");
+            return;
+        }
+
         int idxNext = random.nextInt(n);
         byte[] tagNext = generateTag();
         //BoardContent content = new BoardContent(data, idxNext, tagNext, type);
@@ -263,7 +308,16 @@ public class ClientApplication {
 
     }
 
-    public byte[] receiveBytes() throws Exception {
+    public byte[] receiveBytes(String databaseHash, boolean pending) throws Exception {
+
+        String hash = getHash();
+        if(!hash.equals(databaseHash) && databaseHash != null && !pending) {
+            //System.out.println("user is corrupted");
+            System.out.println("failed hash check");
+            isCorrupted = true;
+            return null;
+        }
+
         byte[] encrypted = board.get(otherIdx, otherTag);
         if (encrypted == null) {
             return null;
