@@ -79,19 +79,23 @@ public class BulletinBoardImpl extends UnicastRemoteObject implements BulletinBo
     @Override
     public synchronized void write(int idx, byte[] data, byte[] tagHash) throws RemoteException {
         if (idx < 0) {
-            return;
+            throw new IllegalArgumentException("Index cannot be negative.");
+        }
+
+        // Dynamically resize if index exceeds the current board size.
+        if ((idx >= board.length && transitionBoard == null) || (transitionBoard != null && idx >= transitionBoard.length)) {
+            startResize(idx * 2);
         }
 
         if (transitionBoard != null && idx < transitionBoard.length) {
-            // If resizing, write to the transition board.
             transitionBoard[idx].datasets.put(new CellKey(tagHash), data);
         } else {
-            // Regular write to the main board.
             board[idx].datasets.put(new CellKey(tagHash), data);
         }
         delta++; // Increment the message count.
         checkResize(); // Check if resizing is needed.
     }
+
 
     @Override
     public synchronized byte[] get(int idx, byte[] tag) throws RemoteException {
@@ -111,11 +115,8 @@ public class BulletinBoardImpl extends UnicastRemoteObject implements BulletinBo
                 value = board[idx].datasets.remove(cellKey);
             }
             if (value == null && transitionBoard != null && idx < transitionBoard.length) {
-                System.out.println("Checking transition board.");
+                //System.out.println("Checking transition board.");
                 value = transitionBoard[idx].datasets.remove(cellKey);
-            }
-            if (value == null) {
-                System.out.println("No value found.");
             }
 
             if (value != null) {
