@@ -50,4 +50,8 @@ public class Message {
     public static Message fromDTO(MessageDTO dto) {
         return new Message(dto.content, dto.sendTime, false, -1);
     }
+
+    public static Message fromRecoveryDTO(RecoveryMessageDTO dto) {
+        return new Message(dto.content, dto.sendTime, dto.sendByMe, -1);
+    }
 }

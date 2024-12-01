@@ -11,6 +11,7 @@ public class ContactSelector extends JPanel {
     ContactSelectedCallback callback;
     private OtherUser selectedUser;
     private JButton createRecoveryKeyBtn;
+    private JButton deleteContactBtn;
 
 
     private class ContactPanel extends JPanel {
@@ -30,6 +31,7 @@ public class ContactSelector extends JPanel {
                     selectedUser = contactList.getSelectedValue();
                     callback.contactSelected(selectedUser);
                     createRecoveryKeyBtn.setEnabled(selectedUser != null);
+                    deleteContactBtn.setEnabled(selectedUser != null);
                 });
                 contactList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
                 contactList.setLayoutOrientation(JList.VERTICAL);
@@ -118,8 +120,8 @@ public class ContactSelector extends JPanel {
         gbc.fill = GridBagConstraints.BOTH;
         add(createBase64, gbc);
 
-        JButton removeContact = new JButton("Remove contact(TODO)");
-        removeContact.addActionListener(e -> {
+        deleteContactBtn = new JButton("Remove contact(TODO)");
+        deleteContactBtn.addActionListener(e -> {
             try {
                 JOptionPane.showMessageDialog(this, "Not implemented yet");
             } catch (Exception ex) {
@@ -133,7 +135,7 @@ public class ContactSelector extends JPanel {
         gbc.gridx = 0;
         gbc.gridy = 3;
         gbc.fill = GridBagConstraints.BOTH;
-        add(removeContact, gbc);
+        add(deleteContactBtn, gbc);
 
         createRecoveryKeyBtn = new JButton("Create recovery key for other (TODO)");
         createRecoveryKeyBtn.addActionListener(e -> {
@@ -162,6 +164,33 @@ public class ContactSelector extends JPanel {
 
         if (selectedUser == null) {
             createRecoveryKeyBtn.setEnabled(false);
+            deleteContactBtn.setEnabled(false);
         }
+
+
+        JButton recoverFromRecoveryKeyBtn = new JButton("Recover from recovery key (TODO)");
+        gbc = new GridBagConstraints();
+        gbc.weightx = 1;
+        gbc.weighty = 0.1;
+        gbc.gridx = 0;
+        gbc.gridy = 5;
+        gbc.fill = GridBagConstraints.BOTH;
+        add(recoverFromRecoveryKeyBtn, gbc);
+
+        recoverFromRecoveryKeyBtn.addActionListener(e -> {
+            try {
+                String recoveryString = JOptionPane.showInputDialog("Enter recovery key");
+                if (recoveryString != null) {
+                    recoveryString = recoveryString.trim();
+                    OtherUser user = Recovery.createOtherUserFromRecoveryString(recoveryString, db, board);
+                    contacts.add(user);
+                    JOptionPane.showMessageDialog(this, "User recovered successfully");
+                    refreshALl();
+                }
+            } catch (Exception ex) {
+                ex.printStackTrace();
+                JOptionPane.showMessageDialog(this, "Error: " + ex.getMessage());
+            }
+        });
     }
 }
