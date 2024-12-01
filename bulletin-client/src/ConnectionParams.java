@@ -10,9 +10,13 @@ import java.io.Serializable;
 public class ConnectionParams implements Serializable {
     public int n;
     public int tagSize;
+    public boolean resizing;
+    public boolean resizingUp;
 
-    public ConnectionParams(int n, int tagSize) {
+    public ConnectionParams(int n, int tagSize, boolean resizing, boolean resizingUp) {
         this.n = n;
         this.tagSize = tagSize;
+        this.resizing = resizing;
+        this.resizingUp = resizingUp;
     }
 }
