@@ -9,6 +9,9 @@ public class ContactSelector extends JPanel {
     private ContactPanel contactPanel;
     List<OtherUser> contacts;
     ContactSelectedCallback callback;
+    private OtherUser selectedUser;
+    private JButton createRecoveryKeyBtn;
+
 
     private class ContactPanel extends JPanel {
         public ContactPanel() {
@@ -24,7 +27,9 @@ public class ContactSelector extends JPanel {
                 setLayout(new BorderLayout());
                 JList<OtherUser> contactList = new JList<>(contacts.toArray(new OtherUser[0]));
                 contactList.addListSelectionListener(e -> {
-                    callback.contactSelected(contactList.getSelectedValue());
+                    selectedUser = contactList.getSelectedValue();
+                    callback.contactSelected(selectedUser);
+                    createRecoveryKeyBtn.setEnabled(selectedUser != null);
                 });
                 contactList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
                 contactList.setLayoutOrientation(JList.VERTICAL);
@@ -115,7 +120,12 @@ public class ContactSelector extends JPanel {
 
         JButton removeContact = new JButton("Remove contact(TODO)");
         removeContact.addActionListener(e -> {
-            JOptionPane.showMessageDialog(this, "Not implemented yet");
+            try {
+                JOptionPane.showMessageDialog(this, "Not implemented yet");
+            } catch (Exception ex) {
+                ex.printStackTrace();
+                JOptionPane.showMessageDialog(this, "Error: " + ex.getMessage());
+            }
         });
         gbc = new GridBagConstraints();
         gbc.weightx = 1;
@@ -125,9 +135,21 @@ public class ContactSelector extends JPanel {
         gbc.fill = GridBagConstraints.BOTH;
         add(removeContact, gbc);
 
-        JButton createRecoveryKey = new JButton("Create recovery key for other (TODO)");
-        createRecoveryKey.addActionListener(e -> {
-            JOptionPane.showMessageDialog(this, "Not implemented yet");
+        createRecoveryKeyBtn = new JButton("Create recovery key for other (TODO)");
+        createRecoveryKeyBtn.addActionListener(e -> {
+            try {
+                String recoveryString = Recovery.createRestoreStringForOtherUser(selectedUser);
+                StringSelection selection = new StringSelection(recoveryString);
+                Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+                clipboard.setContents(selection, null);
+
+                // Notify user of successful copy
+                JOptionPane.showMessageDialog(this, "Recovery key copied to clipboard!");
+
+            } catch (Exception ex) {
+                ex.printStackTrace();
+                JOptionPane.showMessageDialog(this, "Error: " + ex.getMessage());
+            }
         });
         gbc = new GridBagConstraints();
         gbc.weightx = 1;
@@ -135,6 +157,11 @@ public class ContactSelector extends JPanel {
         gbc.gridx = 0;
         gbc.gridy = 4;
         gbc.fill = GridBagConstraints.BOTH;
-        add(createRecoveryKey, gbc);
+        add(createRecoveryKeyBtn, gbc);
+
+
+        if (selectedUser == null) {
+            createRecoveryKeyBtn.setEnabled(false);
+        }
     }
 }
