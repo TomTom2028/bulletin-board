@@ -120,7 +120,7 @@ public class ContactSelector extends JPanel {
         gbc.fill = GridBagConstraints.BOTH;
         add(createBase64, gbc);
 
-        deleteContactBtn = new JButton("Remove contact(TODO)");
+        deleteContactBtn = new JButton("Remove contact");
         deleteContactBtn.addActionListener(e -> {
             try {
                 db.deleteUser(selectedUser);

@@ -313,7 +313,6 @@ public class ClientApplication {
         String hash = getHash();
         if(!hash.equals(databaseHash) && databaseHash != null && !pending) {
             //System.out.println("user is corrupted");
-            System.out.println("failed hash check");
             isCorrupted = true;
             return null;
         }
@@ -426,4 +425,7 @@ public class ClientApplication {
         return otherKey != null && otherTag != null;
     }
 
+    public boolean isCorrupted() {
+        return isCorrupted;
+    }
 }

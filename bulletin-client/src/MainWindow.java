@@ -43,6 +43,13 @@ public class MainWindow extends JPanel {
                 JLabel noUser = new JLabel("No user selected");
                 noUser.setHorizontalAlignment(JLabel.CENTER);
                 add(noUser);
+            } else if (selectedUser.getApplication().isCorrupted()) {
+                setLayout(new BorderLayout());
+                JLabel corrupted = new JLabel("This user is corrupted, please ask them for a recovery " +
+                        "key and delete the user");
+                corrupted.setHorizontalAlignment(JLabel.CENTER);
+                add(corrupted);
+
             } else {
                 boolean isPending = selectedUser.isPending();
 
@@ -157,6 +164,10 @@ public class MainWindow extends JPanel {
                 if (selectedUser.getApplication().canReceive()) {
                     executorService = Executors.newScheduledThreadPool(1);
                     executorService.scheduleAtFixedRate(() -> {
+                        if (selectedUser.getApplication().isCorrupted()) {
+                            refresh(selectedUser);
+                        }
+
                         int prevMessageCount = selectedUser.getMessages().size();
                         if (selectedUser.updateMessages()) {
                             messageArea.setText("");
@@ -170,7 +181,7 @@ public class MainWindow extends JPanel {
                                 }
                             }
                         }
-                    }, 0, 4, TimeUnit.SECONDS);
+                    }, 0, 1, TimeUnit.SECONDS);
                 }
             }
         }
