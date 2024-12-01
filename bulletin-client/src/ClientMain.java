@@ -73,6 +73,10 @@ import java.util.List;
             @Override
             public void contactSelected(OtherUser user) {
                 selectedContact = user;
+                if (selectedContact == null) {
+                    mainWindow.refresh(null);
+                    return;
+                }
                 try {
                     selectedContact.initialise(board);
                 } catch (RemoteException | SQLException e) {

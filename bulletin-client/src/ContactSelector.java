@@ -123,7 +123,11 @@ public class ContactSelector extends JPanel {
         deleteContactBtn = new JButton("Remove contact(TODO)");
         deleteContactBtn.addActionListener(e -> {
             try {
-                JOptionPane.showMessageDialog(this, "Not implemented yet");
+                db.deleteUser(selectedUser);
+                contacts.remove(selectedUser);
+                callback.contactSelected(null);
+                JOptionPane.showMessageDialog(this, "Contact removed successfully");
+                refreshALl();
             } catch (Exception ex) {
                 ex.printStackTrace();
                 JOptionPane.showMessageDialog(this, "Error: " + ex.getMessage());
@@ -137,7 +141,7 @@ public class ContactSelector extends JPanel {
         gbc.fill = GridBagConstraints.BOTH;
         add(deleteContactBtn, gbc);
 
-        createRecoveryKeyBtn = new JButton("Create recovery key for other (TODO)");
+        createRecoveryKeyBtn = new JButton("Create recovery key for other user");
         createRecoveryKeyBtn.addActionListener(e -> {
             try {
                 String recoveryString = Recovery.createRestoreStringForOtherUser(selectedUser);
@@ -168,7 +172,7 @@ public class ContactSelector extends JPanel {
         }
 
 
-        JButton recoverFromRecoveryKeyBtn = new JButton("Recover from recovery key (TODO)");
+        JButton recoverFromRecoveryKeyBtn = new JButton("Recover from recovery key of other user");
         gbc = new GridBagConstraints();
         gbc.weightx = 1;
         gbc.weighty = 0.1;

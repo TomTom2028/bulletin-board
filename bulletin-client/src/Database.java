@@ -244,4 +244,12 @@ public class Database {
         }
         return messages;
     }
+
+    public void deleteUser(OtherUser user) throws SQLException {
+        //language=SQL
+        String sql = "DELETE FROM users WHERE id = ?";
+        PreparedStatement statement = connection.prepareStatement(sql);
+        statement.setInt(1, user.getId());
+        statement.executeUpdate();
+    }
 }
