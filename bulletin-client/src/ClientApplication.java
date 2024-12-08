@@ -318,7 +318,6 @@ public class ClientApplication {
         }
 
         byte[] tagNext = generateTag();
-        // BoardContent content = new BoardContent(data, idxNext, tagNext, type);
         Cipher cipher = Cipher.getInstance("AES");
 
         // combine idx, tag and then data into one byte array
@@ -342,24 +341,6 @@ public class ClientApplication {
         database.updateClientApp(this);
     }
 
-    /*
-     * public ReceiveData receive() throws Exception {
-     * byte[] encrypted = board.get(otherIdx, otherTag);
-     * if (encrypted == null) {
-     * return null;
-     * }
-     * Cipher cipher = Cipher.getInstance("AES");
-     * cipher.init(Cipher.DECRYPT_MODE, otherKey);
-     * byte[] decrypted = cipher.doFinal(encrypted);
-     * BoardContent content = BoardContent.fromByteArray(decrypted, tagSize);
-     * this.otherIdx = content.idx;
-     * this.otherTag = content.tag;
-     * // TODO: probable issue rotate other guys key not ours
-     * rotateOtherKey();
-     * 
-     * return new ReceiveData(new String(content.message), content.type);
-     * }
-     */
 
     public static int byteArrayToInt(byte[] bytes) {
         return ((bytes[0] & 0xFF) << 24) |
@@ -396,7 +377,7 @@ public class ClientApplication {
         System.arraycopy(decrypted, Integer.BYTES, tag, 0, tagSize);
         System.arraycopy(decrypted, Integer.BYTES + tagSize, data, 0, data.length);
 
-        // BoardContent content = BoardContent.fromByteArray(decrypted, tagSize);
+
         this.otherIdx = byteArrayToInt(idxBytes);
         this.otherTag = tag;
         // TODO: probable issue rotate other guys key not ours
@@ -432,23 +413,6 @@ public class ClientApplication {
         randomForKey.nextBytes(newKeyBytes);
         otherKey = new SecretKeySpec(newKeyBytes, 0, newKeyBytes.length, "AES");
     }
-
-    /*
-     * public static ClientApplication createReciever(BulletinBoard board) throws
-     * RemoteException, NoSuchAlgorithmException {
-     * ConnectionParams params = board.getConnectionParams();
-     * SecureRandom random = new SecureRandom();
-     * byte[] seed = new byte[32];
-     * random.nextBytes(seed);
-     * KeyGenerator keyGen = KeyGenerator.getInstance("AES");
-     * keyGen.init(256);
-     * Key key = keyGen.generateKey();
-     * byte[] tag = new byte[params.tagSize];
-     * random.nextBytes(tag);
-     * int idx = random.nextInt(params.n);
-     * return new ClientApplication(seed, key, idx, tag, board);
-     * }
-     */
 
     public int getN() {
         return n;
