@@ -136,17 +136,6 @@ public class ClientApplication {
         keyGen.init(256);
         otherKey = keyGen.generateKey();
 
-        // Query the current board size dynamically
-        // ConnectionParams params = board.getConnectionParams();
-        // this.oldN = this.n;
-        // this.n = params.n;
-        //
-        // // Generate a new index for the other client considering resizing
-        // if (params.resizing && params.resizingUp) {
-        // otherIdx = random.nextInt(this.oldN);
-        // } else {
-        // otherIdx = random.nextInt(this.n);
-        // }
         ConnectionParams params = board.getConnectionParams();
         int currentN = params.n;
 
@@ -236,59 +225,6 @@ public class ClientApplication {
             }
         }
     }
-
-    /*
-     * public void send (String message, MessageType type) throws Exception {
-     * 
-     * public void send(String message, MessageType type) throws Exception {
-     * // Query the current board size dynamically
-     * ConnectionParams params = board.getConnectionParams();
-     * this.oldN = this.n;
-     * this.n = params.n;
-     * 
-     * // while resizing use old n
-     * // int currentN = params.n;
-     * // System.out.println(currentN);
-     * //
-     * // // Generate a new index based on the current board size
-     * // int idxNext = random.nextInt(currentN);
-     * // System.out.println(idxNext);
-     * int idxNext = 0;
-     * if(params.resizing && params.resizingUp) {
-     * idxNext = random.nextInt(this.oldN);
-     * }
-     * else {
-     * idxNext = random.nextInt(this.n);
-     * }
-     * 
-     * // Generate a new tag
-     * byte[] tagNext = generateTag();
-     * 
-     * // Prepare the content to send
-     * BoardContent content = new BoardContent(message.getBytes(), idxNext, tagNext,
-     * type);
-     * 
-     * // Encrypt the content
-     * Cipher cipher = Cipher.getInstance("AES");
-     * cipher.init(Cipher.ENCRYPT_MODE, sharedKey);
-     * byte[] encrypted = cipher.doFinal(content.toByteArray());
-     * 
-     * // Compute the hash of the current tag
-     * MessageDigest hashDigest = MessageDigest.getInstance("SHA-256");
-     * byte[] tagHash = hashDigest.digest(tag);
-     * 
-     * // Write the encrypted data to the board
-     * System.out.println("Writing to index " + this.idx);
-     * board.write(idx, encrypted, tagHash);
-     * 
-     * // Update the current index and tag
-     * this.idx = idxNext;
-     * this.tag = tagNext;
-     * 
-     * // Rotate the encryption key
-     * rotateKey();
-     * }
-     */
 
     public static byte[] intToByteArray(int value) {
         return new byte[] {
@@ -380,7 +316,7 @@ public class ClientApplication {
 
         this.otherIdx = byteArrayToInt(idxBytes);
         this.otherTag = tag;
-        // TODO: probable issue rotate other guys key not ours
+
         rotateOtherKey();
 
         database.updateClientApp(this);
